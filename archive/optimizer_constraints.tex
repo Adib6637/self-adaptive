@@ -1,0 +1,92 @@
+\subsection{Optimization Constraints}\label{sec:optimizer-constraints}
+
+The optimization model for the drone deployment problem is subject to the following constraints, which ensure feasible, physically meaningful, and operationally valid solutions. The notation $i$ denotes the drone index, $j$ the pixel configuration index, and $k$ the FPS configuration index.
+
+\begin{enumerate}
+    \item \textbf{Drone Usage Limit:}
+    \begin{equation}
+        \sum_{i=1}^{N} u_i \leq N
+    \end{equation}
+    Each $u_i \in \{0,1\}$ indicates if drone $i$ is used.
+
+    \item \textbf{Selector Constraints (Pixel and FPS):}
+    \begin{align}
+        &\sum_{j=1}^{M} s_{ij} = 1 \qquad \forall i \\
+        &\sum_{k=1}^{L} f_{ik} = 1 \qquad \forall i
+    \end{align}
+    Each drone selects exactly one pixel and one FPS configuration.
+
+    \item \textbf{Selector Value Assignment:}
+    \begin{align}
+        \text{pix}_i &= \sum_{j=1}^{M} \text{pix}_j^{\text{norm}} s_{ij} \\
+        \text{pix}_x^i &= \sum_{j=1}^{M} \text{pix}_{x,j} s_{ij} \\
+        \text{pix}_y^i &= \sum_{j=1}^{M} \text{pix}_{y,j} s_{ij} \\
+        \text{fps}_i &= \sum_{k=1}^{L} \text{fps}_k^{\text{norm}} f_{ik}
+    \end{align}
+
+    \item \textbf{Variable Normalization and Mapping:}
+    \begin{align}
+        v_i^{\text{true}} &= v_i (v_{\max} - v_{\min}) + v_{\min} \\
+        v_i^{\text{true,inv}} &= 1 / v_i^{\text{true}} \\
+        h_i^{\text{true}} &= h_i (h_{\max} - h_{\min}) + h_{\min} \\
+        \text{fps}_i^{\text{true}} &= \text{fps}_i (\text{FPS}_{\max} - \text{FPS}_{\min}) + \text{FPS}_{\min}
+    \end{align}
+
+    \item \textbf{Power and Energy Expressions:}
+    \begin{align}
+        P^{\text{act}}_i &\geq 0 \\
+        P^{\text{sens}}_i &\geq 0 \\
+        P^{\text{act}}_i &= C_0 + C_1 v_i + C_2 v_i^2 + C_3 v_i^3 + C_4 h_i \\
+        P^{\text{sens}}_i &= a\,\text{fps}_i + b\,\text{pix}_i + c\,\text{fps}_i \text{pix}_i + d\,\text{fps}_i^2 + e\,\text{pix}_i^2 \\
+        P^{\text{act,true}}_i &= P^{\text{act}}_i \cdot P^{\text{act}}_{\max} + P^{\text{act}}_{\min} \\
+        P^{\text{sens,true}}_i &= P^{\text{sens}}_i \cdot P^{\text{sens}}_{\max} + P^{\text{sens}}_{\min} \\
+        E_i &= t_i (P^{\text{act,true}}_i + P^{\text{sens,true}}_i)
+    \end{align}
+
+    \item \textbf{Coverage Constraints:}
+    \begin{align}
+        A_{x,i}^{t_0} &= 2 \tan(\theta) (h_i (h_{\max} - h_{\min}) + h_{\min}) \\
+        A_{y,i}^{t_0} \cdot (\text{pix}_y^i)^{-1} &\leq 0.01 \\
+        A_{x,i}^{t_0} \cdot (A_{y,i}^{t_0})^{-1} &= \text{pix}_x^i \cdot (\text{pix}_y^i)^{-1} \\
+        A_{i}^{t_0} &= A_{x,i}^{t_0} \cdot A_{y,i}^{t_0} \\
+        (A_{y,i}^{t_0})^{-1} &= 1 / A_{y,i}^{t_0} \\
+        (A_{i}^{t_0})^{-1} &= 1 / A_{i}^{t_0} \\
+        n_i &= A_i \cdot (A_{i}^{t_0})^{-1} \\
+        d_i &= (A_{x,i}^{t_0} \cdot n_i) - A_{x,i}^{t_0} \\
+        t_i &= d_i \cdot v_i^{\text{true,inv}}
+    \end{align}
+
+    \item \textbf{FPS Coverage Lower Bound:}
+    \begin{equation}
+        \text{fps}_i^{\text{true}} \geq v_i \cdot 2 \tan(\theta)^{-1}
+    \end{equation}
+
+    \item \textbf{Total Area Coverage:}
+    \begin{equation}
+        \sum_{i=1}^{N} A_i^{\text{true}} = A_{\text{field}}
+    \end{equation}
+    where $A_i^{\text{true}} = A_i \cdot u_i$.
+
+    \item \textbf{Operation Time and Charging:}
+    \begin{align}
+        c_i &= (t_i - t_{\max}) / t_{\max} \\
+        t_i^{\text{req}} &= t_i + c_i \cdot t_{\text{charge}}
+    \end{align}
+
+    \item \textbf{Variable Bounds:}
+    \begin{itemize}
+        \item $v_i \in [0,1]$, $h_i \in [0,1]$, $\text{fps}_i \in [0,1]$, $\text{pix}_i \in [0,1]$
+        \item $v_i^{\text{true}} \in [v_{\min}, v_{\max}]$, $h_i^{\text{true}} \in [h_{\min}, h_{\max}]$
+        \item $A_{x,i}^{t_0} \in [A_{x,\min}, A_{x,\max}]$, $A_{i}^{t_0} \in [0, A_{\text{total,max}}]$
+        \item $A_i \leq A_{\text{field}}$
+        \item $n_i \in [n_{\min}, n_{\max}]$
+        \item $d_i \in [A_{x,\min}, d_{\max}]$
+        \item $t_i \in [t_{\min}, \infty)$
+        \item $P^{\text{act,true}}_i \in [P^{\text{act}}_{\min}, P^{\text{act}}_{\max}]$
+        \item $P^{\text{sens,true}}_i \in [P^{\text{sens}}_{\min}, P^{\text{sens}}_{\max}]$
+        \item $E_i \in [0, 10^7]$
+        \item $c_i \in [0, 20]$
+    \end{itemize}
+\end{enumerate}
+
+All constraints are implemented using Gurobi's quadratic and general constraint features, ensuring mathematical consistency and computational efficiency.

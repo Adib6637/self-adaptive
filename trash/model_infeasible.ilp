@@ -1,0 +1,10 @@
+\ Model (null)_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+\ Signature: 0xb1522226a5e18902
+Minimize
+ 
+Subject To
+ A_expr: - 36.1008 drone_v + A + [ ] = -103.2304440430262
+Bounds
+ -infinity <= drone_v <= 1
+End

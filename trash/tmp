@@ -1,0 +1,390 @@
+
+
+
+
+void Optimizer::optimize() { 
+  if (model_parameter[1].read() == 0){
+      return;
+  }
+  if (counter == observed_data[19].read()) {
+      return; // No new data to process
+  }else {
+      counter = observed_data[19].read(); // Update counter to the latest data
+  }
+
+  // Gurobi environment
+  GRBEnv env = GRBEnv(true);
+  //env.set(GRB_IntParam_OutputFlag, 0);
+  env.start();
+  // model
+  GRBModel model = GRBModel(env);
+  // Enable non-convex quadratic constraints
+  model.set(GRB_IntParam_NonConvex, 2);
+
+
+
+  Eigen::VectorXd x(4);
+  x(0) = model_parameter[0].read();  // eta
+  x(1) = model_parameter[1].read();  // delta
+  x(2) = model_parameter[2].read();  // alpha
+  x(3) = model_parameter[3].read();  // beta
+
+
+  double g = GRAVITY; // gravitational constant
+  double mass_d = DRONE_MASS; // Drone mass
+  double mass_p = observed_data[1].read(); // Payload mass
+  double mass_sum = mass_d + mass_p; // Total
+
+  double v_wind = weather_prediction[0].read(); // Wind speed
+  double theta_wind = weather_prediction[1].read(); // Wind angle
+  double sin_th = std::sin(theta_wind); // Sine of wind angle
+  double v_wind_sin_th = v_wind * sin_th; // Wind speed component in the direction of the wind angle
+  double v_wind_sin_th_2 = std::pow(v_wind_sin_th,2);
+  double v_wind_sin_th_3 = std::pow(v_wind_sin_th,3);
+
+  
+  GRBVar drone_v = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_v");
+  GRBVar drone_v_2 = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_v_2");
+  //GRBVar drone_v_3 = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_v_3");
+  GRBVar drone_h = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_h");
+
+  GRBVar nominator = model.addVar(0, 0.5, 0.0, GRB_CONTINUOUS, "nominator");
+  GRBVar A = model.addVar(0.0, 0.1, 0.0, GRB_CONTINUOUS, "A");
+  GRBVar B = model.addVar(0.0, 0.0002, 0.0, GRB_CONTINUOUS, "B");
+  GRBVar C = model.addVar(0.0, 0.0002, 0.0, GRB_CONTINUOUS, "C");
+
+  // constraints
+  model.addQConstr(drone_v_2 == drone_v*drone_v, "drone_v_2_var");
+  //model.addQConstr(drone_v_3 == drone_v*drone_v_2, "drone_v_3_var");
+
+
+  // power actuator equation
+  model.addQConstr(A == g*mass_sum*v_wind*sin_th+g*mass_sum*drone_v, "A_expr");
+  //std::pow((v_wind_sin_th+drone_v),3)
+  //model.addQConstr(B == v_wind_sin_th_3 + v_wind_sin_th_2*drone_v + v_wind_sin_th*drone_v_2 + drone_v_3, "B_expr");
+  model.addQConstr(B == v_wind_sin_th_3 + v_wind_sin_th_2*drone_v + v_wind_sin_th*drone_v_2, "B_expr");
+  model.addQConstr(C == drone_h*mass_sum, "C_expr");
+  model.addQConstr(nominator == A + x(2)*B + x(3)*C, "nominator_expr");	
+  double denominator = 1/x(0);
+
+  // actuator power equation
+  GRBQuadExpr power_actuator = nominator*denominator + x(1);
+  model.addQConstr(power_actuator >= 0, "power_actuator_lower_bound");
+
+
+  // objective
+  model.setObjective(power_actuator, GRB_MINIMIZE);
+
+
+  // optimize
+  model.optimize();
+
+  //handle result
+  if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
+    std::cout << "Optimal v: " << drone_v.get(GRB_DoubleAttr_X) << std::endl;
+    std::cout << "Optimal h: " << drone_h.get(GRB_DoubleAttr_X) << std::endl;
+    std::cout << "Minimum P: " << model.get(GRB_DoubleAttr_ObjVal)*POWER_ACTUATOR_MAX << std::endl;
+  } else {
+    std::cout << "Optimization was not successful." << std::endl;
+  }
+}
+
+
+
+  
+
+
+// model_param
+double pa_eta = model_parameter[0].read();  
+double pa_delta = model_parameter[1].read(); 
+double pa_alpha = model_parameter[2].read(); 
+double pa_beta = model_parameter[3].read(); 
+
+double ps_sigma = model_parameter[4].read();
+double ps_omega = model_parameter[5].read(); 
+double ps_epsilon = model_parameter[6].read();
+
+// weather prediction
+double wp_v_wind = weather_prediction[0].read();         
+double wp_theta_wind = weather_prediction[1].read();   
+
+// observed data
+double drone_payload_mass = observed_data[1].read(); // mass of the payload
+
+
+// folding actuator equation
+double pa_phi = std::sin(wp_theta_wind);
+double pa_theta = 1/pa_eta; // 1/eta
+double pa_C_0 = pa_theta * GRAVITY * ((DRONE_MASS + drone_payload_mass)/MASS_MAX) * pa_phi + pa_theta*pa_alpha*std::pow(pa_phi,3) + pa_delta;
+double pa_C_1 = pa_theta * GRAVITY * ((DRONE_MASS + drone_payload_mass)/MASS_MAX);
+double pa_C_2 = 3 * pa_theta * pa_alpha * pa_phi + 3 *pa_theta * pa_alpha * pa_phi;
+double pa_C_3 = pa_theta * pa_alpha;
+double pa_C_4 = pa_theta * pa_beta * ((DRONE_MASS + drone_payload_mass)/MASS_MAX);
+
+// folding sensor equation
+double ps_C_0 = ps_sigma;
+double ps_C_1 = ps_omega;
+double ps_C_2 = ps_epsilon;
+
+// Gurobi environment
+GRBEnv env = GRBEnv(true);
+env.set(GRB_IntParam_OutputFlag, 0);
+env.start();
+
+// model
+GRBModel model = GRBModel(env);
+
+// Enable non-convex quadratic constraints
+model.set(GRB_IntParam_NonConvex, 2);
+
+// variables
+GRBVar drone_v = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_v");
+GRBVar drone_v_2 = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_v_2");
+GRBVar drone_v_3 = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_v_3");
+GRBVar drone_h = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "drone_h");
+
+// inverse of variables
+GRBVar drone_v_inv = model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "v_inv");
+
+
+// constraints
+model.addQConstr(drone_v_2 == drone_v*drone_v, "drone_v_2_var");
+model.addQConstr(drone_v_3 == drone_v*drone_v_2, "drone_v_3_var");
+
+// actuator power equation
+GRBQuadExpr pa_expr = pa_C_0 + pa_C_1*drone_v + pa_C_2*drone_v_2 + pa_C_3*drone_v_3 + pa_C_4*drone_h;
+model.addQConstr(pa_expr >= 0, "pa_expr_lower_bound");
+
+
+// objective
+model.setObjective(pa_expr, GRB_MINIMIZE);
+
+
+// optimize
+model.optimize();
+
+//handle result
+  if (model.get(GRB_IntAttr_Status) == GRB_OPTIMAL) {
+    std::cout << "Optimal v: " << drone_v.get(GRB_DoubleAttr_X) << std::endl;
+    std::cout << "Optimal h: " << drone_h.get(GRB_DoubleAttr_X) << std::endl;
+    std::cout << "Minimum P: " << model.get(GRB_DoubleAttr_ObjVal)*POWER_ACTUATOR_MAX << std::endl;
+  } else {
+    std::cout << "Optimization was not successful." << std::endl;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// drone pixel set
+std::vector<double> drone_set_pix = {307200,1433600 , 2240000};
+std::vector<double> drone_set_pix_x = {640,1280 ,1600 };
+std::vector<double> drone_set_pix_y = {480,1120 ,1400 };
+std::vector<GRBVar> drone_set_pix_selector;  // binary vars
+for (int i = 0; i < drone_set_pix.size(); ++i) {
+    drone_set_pix_selector.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "y_" + std::to_string(i)));}
+GRBLinExpr drone_set_pix_selector_total = 0;
+for (auto& drone_set_pix_selector_i : drone_set_pix_selector) drone_set_pix_selector_total += drone_set_pix_selector_i;
+model.addConstr(drone_set_pix_selector_total == 1, "drone_set_pix_selector_total_1");
+double drone_mean_pix = 1326933.33, drone_std_pix = 792658.94;
+GRBVar drone_pix = model.addVar((307200.0 - drone_mean_pix) / (drone_std_pix+ 1e-8),  (2240000.0 - drone_mean_pix) / (drone_std_pix+ 1e-8), 0.0, GRB_CONTINUOUS, "drone_pix");
+GRBLinExpr drone_set_pix_selector_expr = 0;
+for (int i = 0; i < drone_set_pix.size(); ++i) {
+    drone_set_pix_selector_expr += ((drone_set_pix[i] - drone_mean_pix) / (drone_std_pix+ 1e-8))* drone_set_pix_selector[i];}
+model.addQConstr(drone_pix == drone_set_pix_selector_expr, "drone_pix_value_restriction");
+
+
+// Identity
+model.addQConstr(drone_v_2 == drone_v * drone_v, "drone_v_2_identity");
+model.addQConstr(drone_v_inv*drone_v == 1, "drone_v_inv_identity");
+
+
+
+
+
+
+
+
+
+///////////////////////////
+
+
+
+
+
+#include <iostream>
+#include <Eigen/Dense>
+
+using namespace Eigen;
+
+// Online gradient descent update for MSE
+// Inputs:
+//  theta - coefficients vector, updated in place
+//  u     - input vector (fps, pixels, fps*pixels, 1)
+//  y     - observed power
+//  lr    - learning rate (e.g., 0.000001)
+void mse_update(VectorXd& theta, const VectorXd& u, double y, double lr) {
+    double y_pred = theta.dot(u);
+    double error = y - y_pred;
+    VectorXd grad = -2.0 * error * u;
+    theta = theta - lr * grad;
+}
+
+int main() {
+    VectorXd theta = VectorXd::Zero(4);
+
+    // Example new data
+    double fps = 30;
+    double pixels = 1000;
+    double power = 500;
+
+    VectorXd u(4);
+    u << fps, pixels, fps * pixels, 1;
+
+    double learning_rate = 1e-7;
+
+    mse_update(theta, u, power, learning_rate);
+
+    std::cout << "Updated coefficients: " << theta.transpose() << std::endl;
+
+    return 0;
+}
+
+
+
+
+    /////////////////////////////////////
+    // handle the sensor power model updates
+
+    double x1 = fps_normalized; // Normalized fpsh
+    double x2 = pix_normalized; // Normalized pixels
+
+    // Prediction using updated model with bias
+    //double power_camera_predicted = coeff_sensor(0) * x1 + coeff_sensor(1) * x2  + coeff_sensor(2);
+    double power_camera_predicted = coeff_sensor(0)*x2 + coeff_sensor(1)*x1 + coeff_sensor(2)*x1*x2 + coeff_sensor(3); // Using the new model with bias
+
+    // Compute error
+    double error = power_sensor_normalized - power_camera_predicted;
+
+    // Loss
+    double loss_sensor = 0.5 * error * error;
+
+    // Skip update if unstable
+    if (std::isnan(loss_sensor)) {
+        ;
+    }else{
+        // Compute gradients
+        Eigen::Vector3d grad_sensor;
+        grad_sensor(0) = -x1 * error;
+        grad_sensor(1) = -x2 * error;
+        grad_sensor(2) = -error;
+
+        // Learning rate (consider decaying over time)
+        double lr = lr_sensor;
+
+        // Update parameters
+        coeff_sensor -= lr * grad_sensor;
+
+        // Output updated parameters 
+        for (int i = 4; i < 7; ++i) {
+        model_parameter[i].write(coeff_sensor(i-4));
+        } 
+
+        log_coefficient_sensor(coeff_sensor(0), coeff_sensor(1), coeff_sensor(2), observed_data[19].read());
+    }
+
+    // pixel x and y selector
+std::vector<GRBVar> sensor_pix_x_selector;  // binary vars
+std::vector<GRBVar> sensor_pix_y_selector;  // binary vars
+GRBLinExpr sensor_pix_x_selector_total = 0;
+GRBLinExpr sensor_pix_y_selector_total = 0;
+for (int i = 0; i < drone_set_pix_x.size(); ++i) {
+    sensor_pix_x_selector.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "sensor_pix_x_selector_" + std::to_string(i)));
+}
+for (int i = 0; i < drone_set_pix_y.size(); ++i) {
+    sensor_pix_y_selector.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "sensor_pix_y_selector_" + std::to_string(i)));
+}
+for (int i = 0; i < sensor_pix_x_selector.size(); ++i) {
+    sensor_pix_x_selector_total += sensor_pix_x_selector[i];
+}
+for (int i = 0; i < sensor_pix_y_selector.size(); ++i) {
+    sensor_pix_y_selector_total += sensor_pix_y_selector[i];
+}
+model.addConstr(sensor_pix_x_selector_total == 1, "sensor_pix_x_selector_total_1");
+model.addConstr(sensor_pix_y_selector_total == 1, "sensor_pix_y_selector_total_1");
+// pixel x and y selector expression
+GRBLinExpr sensor_pix_x_selector_expr = 0;
+GRBLinExpr sensor_pix_y_selector_expr = 0;
+for (int i = 0; i < drone_set_pix_x.size(); ++i) {
+    sensor_pix_x_selector_expr += drone_set_pix_x[i] * sensor_pix_x_selector[i]; 
+}
+for (int i = 0; i < drone_set_pix_y.size(); ++i) {
+    sensor_pix_y_selector_expr += drone_set_pix_y[i] * sensor_pix_y_selector[i];
+}
+model.addQConstr(sensor_pix_x == sensor_pix_x_selector_expr, "sensor_pix_x_value_restriction");
+model.addQConstr(sensor_pix_y == sensor_pix_y_selector_expr, "sensor_pix_y_value_restriction");
+
+
+
+
+
+
+
+
+
+
+//////////////////////////
+    drone_v_inv_non_zero(num_drones), 
+    drone_v_inv_non_zero_binary(num_drones), 
+    drone_v_true_inv_non_zero(num_drones),
+    drone_v_true_inv_non_zero_binary(num_drones),
+    sensor_pix_x_inv_non_zero(num_drones),
+    sensor_pix_x_inv_non_zero_binary(num_drones),
+    sensor_pix_y_inv_non_zero(num_drones),
+    sensor_pix_y_inv_non_zero_binary(num_drones),
+    covered_area_y_t0_inv_non_zero(num_drones),
+    covered_area_y_t0_inv_non_zero_binary(num_drones),
+    covered_area_total_t0_inv_non_zero(num_drones),
+    covered_area_total_t0_inv_non_zero_binary(num_drones),
+    covered_area_total_inv_non_zero(num_drones),
+    covered_area_total_inv_non_zero_binary(num_drones),
+      // handle zero denominator
+      drone_v_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "drone_v_inv_non_zero_" + std::to_string(drone));
+      drone_v_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "drone_v_inv_non_zero_binary_" + std::to_string(drone));
+      drone_v_true_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "drone_v_true_inv_non_zero_" + std::to_string(drone));
+      drone_v_true_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "drone_v_true_inv_non_zero_binary_" + std::to_string(drone));      
+      sensor_pix_x_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "sensor_pix_x_inv_non_zero_" + std::to_string(drone));
+      sensor_pix_x_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "sensor_pix_x_inv_non_zero_binary_" + std::to_string(drone));
+      sensor_pix_y_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "sensor_pix_y_inv_non_zero_" + std::to_string(drone));
+      sensor_pix_y_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "sensor_pix_y_inv_non_zero_binary_" + std::to_string(drone));
+      covered_area_y_t0_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "covered_area_y_t0_inv_non_zero_" + std::to_string(drone));
+      covered_area_y_t0_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "covered_area_y_t0_inv_non_zero_binary_" + std::to_string(drone));      
+      covered_area_total_t0_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "covered_area_total_t0_inv_non_zero_" + std::to_string(drone));
+      covered_area_total_t0_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "covered_area_total_t0_inv_non_zero_binary_" + std::to_string(drone));      
+      covered_area_total_inv_non_zero[drone] = model.addVar(0.0, 1000000000.0, 0.0, GRB_CONTINUOUS, "covered_area_total_inv_non_zero_" + std::to_string(drone));
+      covered_area_total_inv_non_zero_binary[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "covered_area_total_inv_non_zero_binary_" + std::to_string(drone));
+
+      model.addQConstr(drone_v_inv_non_zero[drone] == drone_v_inv[drone]*drone_v_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - drone_v_inv_non_zero_binary[drone]), "drone_v_inv_non_zero_identity_" + std::to_string(drone)); // if drone_v_inv is zero, then drone_v_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to drone_v_inv
+      model.addGenConstrIndicator(drone_v_inv_non_zero_binary[drone], 1, drone_v_inv[drone] >= 1e-10, "drone_v_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if drone_v_inv is greater than 1e-10, then drone_v_inv_non_zero_binary is equal to 1, otherwise it is equal to 0
+      model.addQConstr(drone_v_true_inv_non_zero[drone] == drone_v_true_inv[drone]*drone_v_true_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - drone_v_true_inv_non_zero_binary[drone]), "drone_v_true_inv_non_zero_identity_" + std::to_string(drone)); // if drone_v_true_inv is zero, then drone_v_true_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to drone_v_true_inv
+      model.addGenConstrIndicator(drone_v_true_inv_non_zero_binary[drone], 1, drone_v_true[drone] >= 1e-10, "drone_v_true_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if drone_v_true is greater than 1e-10, then drone_v_true_inv_non_zero_binary is equal to 1, otherwise it is equal to 0
+      model.addQConstr(sensor_pix_x_inv_non_zero[drone] == sensor_pix_x_inv[drone]*sensor_pix_x_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - sensor_pix_x_inv_non_zero_binary[drone]), "sensor_pix_x_inv_non_zero_identity_" + std::to_string(drone)); // if sensor_pix_x_inv is zero, then sensor_pix_x_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to sensor_pix_x_inv
+      model.addGenConstrIndicator(sensor_pix_x_inv_non_zero_binary[drone], 1, sensor_pix_x[drone] >= 1e-10, "sensor_pix_x_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if sensor_pix_x is greater than 1e-10, then sensor_pix_x_inv_non_zero_binary is equal to 1, otherwise it is equal to 0
+      model.addQConstr(sensor_pix_y_inv_non_zero[drone] == sensor_pix_y_inv[drone]*sensor_pix_y_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - sensor_pix_y_inv_non_zero_binary[drone]), "sensor_pix_y_inv_non_zero_identity_" + std::to_string(drone)); // if sensor_pix_y_inv is zero, then sensor_pix_y_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to sensor_pix_y_inv
+      model.addGenConstrIndicator(sensor_pix_y_inv_non_zero_binary[drone], 1, sensor_pix_y[drone] >= 1e-10, "sensor_pix_y_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if sensor_pix_y is greater than 1e-10, then sensor_pix_y_inv_non_zero_binary is equal to 1, otherwise it is equal to 0
+      model.addQConstr(covered_area_y_t0_inv_non_zero[drone] == covered_area_y_t0[drone]*covered_area_y_t0_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - covered_area_y_t0_inv_non_zero_binary[drone]), "covered_area_y_t0_inv_non_zero_identity_" + std::to_string(drone)); // if covered_area_y_t0 is zero, then covered_area_y_t0_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to covered_area_y_t0
+      model.addGenConstrIndicator(covered_area_y_t0_inv_non_zero_binary[drone], 1, covered_area_y_t0[drone] >= 1e-10, "covered_area_y_t0_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if covered_area_y_t0 is greater than 1e-10, then covered_area_y_t0_inv_non_zero_binary is equal to 1, otherwise it is equal to 0
+      model.addQConstr(covered_area_total_t0_inv_non_zero[drone] == covered_area_total_t0[drone]*covered_area_total_t0_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - covered_area_total_t0_inv_non_zero_binary[drone]), "covered_area_total_t0_inv_non_zero_identity_" + std::to_string(drone)); // if covered_area_total_t0 is zero, then covered_area_total_t0_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to covered_area_total_t0
+      model.addGenConstrIndicator(covered_area_total_t0_inv_non_zero_binary[drone], 1, covered_area_total_t0[drone] >= 1e-10, "covered_area_total_t0_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if covered_area_total_t0 is greater than 1e-10, then covered_area_total_t0_inv_non_zero_binary is equal to 1, otherwise it is equal to 0
+      model.addQConstr(covered_area_total_inv_non_zero[drone] == covered_area_total[drone]*covered_area_total_inv_non_zero_binary[drone] + LARGE_NUMBER * (1 - covered_area_total_inv_non_zero_binary[drone]), "covered_area_total_inv_non_zero_identity_" + std::to_string(drone)); // if covered_area_total is zero, then covered_area_total_inv_non_zero is equal to LARGE_NUMBER, otherwise it is equal to covered_area_total
+      model.addGenConstrIndicator(covered_area_total_inv_non_zero_binary[drone], 1, covered_area_total[drone] >= 1e-10, "covered_area_total_inv_non_zero_binary_indicator_" + std::to_string(drone)); // if covered_area_total is greater than 1e-10, then covered_area_total_inv_non_zero_binary is equal to 1, otherwise it is equal to 0

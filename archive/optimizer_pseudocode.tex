@@ -1,0 +1,60 @@
+% filepath: /mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/optimizer_pseudocode.tex
+
+\begin{algorithm}[ht]
+\caption{\texttt{Optimizer::optimize()} -- Optimization Core}
+\SetAlgoLined
+
+% Inputs and outputs
+\KwIn{Model parameters, observed data, weather prediction, configuration sets}
+\KwOut{Optimized configuration, power consumption, operation time}
+
+% Step 1: Early exit checks
+\If{optimizer is off or model parameter invalid or no new data}{
+    \Return
+}
+
+% Step 2: Preprocessing and normalization
+Normalize pixel and fps sets\;
+Read and normalize weather prediction\;
+Read model parameters\;
+Compute actuator and sensor model coefficients\;
+
+% Step 3: Setup Gurobi environment
+Initialize Gurobi environment and model\;
+Set model parameters (non-convex, output flags, etc.)\;
+
+% Step 4: Define variables for each drone
+\ForEach{drone $d$ in fleet}{
+    Add variables for speed, height, fps, pixel, area, power, energy, etc.\;
+    Add selector variables for discrete configurations (pixel, fps)\;
+    Add binary variable for drone usage\;
+}
+
+% Step 5: Add constraints
+\ForEach{drone $d$}{
+    Add constraints for variable relationships (e.g., normalization, area, power)\;
+    Add selector constraints (only one config per drone)\;
+    Add operation time and charging constraints\;
+}
+Add constraint: sum of covered area equals field area\;
+Add constraint: total drones used $\leq$ available\;
+
+% Step 6: Define objective
+Set objective to minimize total energy and drone usage\;
+
+% Step 7: Optimize
+Call Gurobi optimizer\;
+
+% Step 8: Handle results
+\If{solution is optimal}{
+    Print and store results for each used drone\;
+    Print totals (power, energy, area)\;
+} \Else {
+    Print error and model status\;
+    \If{infeasible or unbounded}{
+        Print diagnostic message\;
+    }
+}
+Export model for diagnostics (optional)\;
+\label{alg:optimizer_pseudocode}
+\end{algorithm}

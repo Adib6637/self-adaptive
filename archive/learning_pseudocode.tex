@@ -1,0 +1,45 @@
+\begin{algorithm}[ht]
+\caption{\texttt{Model\_Learning::learning()} -- Machine Learning Core}
+\SetAlgoLined
+\KwIn{Feature vectors $d_a$, $d_s$; measured powers $p^{\text{act}}_{\text{measured}}, p^{\text{sens}}_{\text{measured}}$}
+\KwOut{Updated coefficients: $\text{coeff}_{\text{actuator}}, \text{coeff}_{\text{sensor}}$}
+
+\vspace{1mm}
+\textbf{// Actuator Power Model Update}
+\For{$i \gets 0$ \KwTo $3$}{
+    $x_{\text{plus}} \gets \text{coeff}_{\text{actuator}}$\;
+    $x_{\text{plus}}[i] \mathrel{+}= \epsilon_{\text{actuator}}$\;
+    $y_1 \gets \text{predict\_actuator\_power}(x_{\text{plus}}, d_a)$\;
+    $x_{\text{minus}} \gets \text{coeff}_{\text{actuator}}$\;
+    $x_{\text{minus}}[i] \mathrel{-}= \epsilon_{\text{actuator}}$\;
+    $y_2 \gets \text{predict\_actuator\_power}(x_{\text{minus}}, d_a)$\;
+    $\text{grad}[i] \gets \dfrac{y_1 - y_2}{2 \cdot \epsilon_{\text{actuator}}}$\;
+}
+$p^{\text{act}}_{\text{pred}} \gets \text{predict\_actuator\_power}(\text{coeff}_{\text{actuator}}, d_a)$\;
+$\text{loss}_{\text{act}} \gets 0.5 \cdot (p^{\text{act}}_{\text{pred}} - p^{\text{act}}_{\text{measured}})^2$\;
+$\text{update} \gets \text{lr}_{\text{actuator}} \cdot (p^{\text{act}}_{\text{pred}} - p^{\text{act}}_{\text{measured}}) \cdot \text{grad}$\;
+$\text{lr}_{\text{actuator}} \gets \text{lr}_{\text{actuator}} \cdot \text{decay}_{\text{actuator}}$\;
+\For{$i \gets 0$ \KwTo $3$}{
+    $\text{coeff}_{\text{actuator}}[i] \gets \text{coeff}_{\text{actuator}}[i] - \text{update}[i]$\;
+}
+
+\vspace{1mm}
+\textbf{// Sensor Power Model Update}
+\For{$i \gets 0$ \KwTo $5$}{
+    $x_{\text{plus}} \gets \text{coeff}_{\text{sensor}}$\;
+    $x_{\text{plus}}[i] \mathrel{+}= \epsilon_{\text{sensor}}$\;
+    $y_1 \gets \text{predict\_sensor\_power}(x_{\text{plus}}, d_s)$\;
+    $x_{\text{minus}} \gets \text{coeff}_{\text{sensor}}$\;
+    $x_{\text{minus}}[i] \mathrel{-}= \epsilon_{\text{sensor}}$\;
+    $y_2 \gets \text{predict\_sensor\_power}(x_{\text{minus}}, d_s)$\;
+    $\text{grad}_{\text{sensor}}[i] \gets \dfrac{y_1 - y_2}{2 \cdot \epsilon_{\text{sensor}}}$\;
+}
+$p^{\text{sens}}_{\text{pred}} \gets \text{predict\_sensor\_power}(\text{coeff}_{\text{sensor}}, d_s)$\;
+$\text{loss}_{\text{sensor}} \gets 0.5 \cdot (p^{\text{sens}}_{\text{pred}} - p^{\text{sens}}_{\text{measured}})^2$\;
+$\text{update}_{\text{sensor}} \gets \text{lr}_{\text{sensor}} \cdot (p^{\text{sens}}_{\text{pred}} - p^{\text{sens}}_{\text{measured}}) \cdot \text{grad}_{\text{sensor}}$\;
+$\text{lr}_{\text{sensor}} \gets \text{lr}_{\text{sensor}} \cdot \text{decay}_{\text{sensor}}$\;
+\For{$i \gets 0$ \KwTo $5$}{
+    $\text{coeff}_{\text{sensor}}[i] \gets \text{coeff}_{\text{sensor}}[i] - \text{update}_{\text{sensor}}[i]$\;
+}
+\label{alg:model_learning_pscode}
+\end{algorithm}
