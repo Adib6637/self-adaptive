@@ -2,12 +2,29 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load your CSV file
-df = pd.read_csv("../Simulation/log/log_optimization_results.csv")
+try:
+    df = pd.read_csv("../log/log_optimization_results.csv")
+except FileNotFoundError:
+    df = pd.read_csv("../Simulation/log/log_optimization_results.csv")
+    
+
+
 
 # Make counter relative (1, 2, 3, ...)
 unique_counters = sorted(df['counter'].unique())
 counter_map = {old: new for new, old in enumerate(unique_counters, start=1)}
 df['counter'] = df['counter'].map(counter_map)
+
+# Filter to only include runs 0 to 18
+# If your counters are 1-based after mapping, use 1 to 18 instead
+# If you want 0-based, adjust accordingly
+# Here, assuming counters are 1-based after mapping
+
+#df = df[df['counter'].between(24, 43)]
+df = df[df['counter'].between(24, 43)]
+
+# Prune the data: only keep runs where counter is 1, 4, 7, ...
+#df = df[df['counter'] % 4 == 1]
 
 # Get unique counters (runs)
 counters = sorted(df['counter'].unique())
@@ -61,3 +78,62 @@ for col in numeric_cols:
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+# 4. Plot total energy vs number of drones used per run
+# Get total energy per run
+energy_per_run = df.groupby('counter')['energy'].sum()
+# Get number of drones used per run (already computed)
+# drones_used_per_run
+fig, ax1 = plt.subplots(figsize=(10, 5))
+color = 'tab:blue'
+ax1.set_xlabel('Run Counter')
+ax1.set_ylabel('Total Energy', color=color)
+ax1.plot(energy_per_run.index, energy_per_run.values, marker='o', color=color, label='Total Energy')
+ax1.tick_params(axis='y', labelcolor=color)
+
+ax2 = ax1.twinx()
+color = 'tab:orange'
+ax2.set_ylabel('Number of Drones Used', color=color)
+ax2.plot(drones_used_per_run.index, drones_used_per_run.values, marker='s', color=color, label='Drones Used')
+ax2.tick_params(axis='y', labelcolor=color)
+
+plt.title('Total Energy vs Number of Drones Used per Run')
+fig.tight_layout()
+plt.grid(True)
+plt.show()
+
+# 5. Plot run counter vs max operation time (left) and number of drones used (right)
+max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max()
+fig, ax1 = plt.subplots(figsize=(10, 5))
+color = 'tab:blue'
+ax1.set_xlabel('Run Counter')
+ax1.set_ylabel('Max Operation Time (per Run)', color=color)
+ax1.plot(max_operation_time_per_run.index, max_operation_time_per_run.values, marker='o', color=color, label='Max Operation Time')
+ax1.tick_params(axis='y', labelcolor=color)
+
+ax2 = ax1.twinx()
+color = 'tab:orange'
+ax2.set_ylabel('Number of Drones Used', color=color)
+ax2.plot(drones_used_per_run.index, drones_used_per_run.values, marker='s', color=color, label='Drones Used')
+ax2.tick_params(axis='y', labelcolor=color)
+
+plt.title('Max Operation Time and Number of Drones Used per Run')
+fig.tight_layout()
+plt.grid(True)
+plt.show()
+
+# 6. Plot objective expression per run
+operation_time_total_per_run = df.groupby('counter')['operation_time_req'].sum()
+objective_expr_per_run = (
+    energy_per_run
+    + 10 * drones_used_per_run
+    + 1000 * operation_time_total_per_run
+)
+plt.figure(figsize=(10, 5))
+plt.plot(objective_expr_per_run.index, objective_expr_per_run.values, marker='D', color='purple')
+plt.xlabel('Run Counter')
+plt.ylabel('Objective Value')
+plt.title('Objective Expression per Run')
+plt.grid(True)
+plt.tight_layout()
+plt.show()
