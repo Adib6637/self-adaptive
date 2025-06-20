@@ -10,6 +10,7 @@
 int success = 0;
 
 void Optimizer::optimize() { 
+  if (!OPTIMIZER_ON)return;
 
   if (model_parameter[1].read() == 0){
       return;
@@ -24,6 +25,7 @@ void Optimizer::optimize() {
   // debugging
   //#define DEBUG
   #ifdef DEBUG
+  if (success > 42) return;
   std::cout << "########################################################################################################################################################################" << std::endl;
   std::cout << "Optimizer started with counter: " << counter << std::endl;
   std::cout << "Weather prediction: " << weather_prediction[0].read() << ", " << weather_prediction[1].read() << std::endl;
@@ -62,7 +64,7 @@ void Optimizer::optimize() {
 
     // model_param for drone typr (for now only conside one type)
     
-    //#define FIX 
+    #define FIX 
 
     #ifndef FIX
     double pa_eta = model_parameter[0].read();  
@@ -74,7 +76,7 @@ void Optimizer::optimize() {
     double ps_b = model_parameter[5].read();
     double ps_c = model_parameter[6].read();
     #else
-    double fix_model_parameter[] = {0.3171147530550516013825301797624, 0.49724478086264484177903000272636, 0.097347388978607160558986777232349, 0.0021834763473774949915640064546096, 0.95250196844048962141471292852657, 1.6596945113771681690195691771805, -0.16685365913423366723833396463306}; 
+    double fix_model_parameter[] = {0.31862743382724822982510204383289, 0.2127602615282839781940538159688, 0.097328390658043009708855208828027, 0.0021011339810415512012464755997598, 1.1463925428785151083843629749026, 10.212336874294889454972690145951, -1.88007013107074638647020492499}; 
     double pa_eta = fix_model_parameter[0]; //model_parameter[0].read();  
     double pa_delta = fix_model_parameter[1]; //model_parameter[1].read(); 
     double pa_alpha = fix_model_parameter[2]; //model_parameter[2].read(); 
@@ -182,6 +184,7 @@ void Optimizer::optimize() {
         drone_used_total += drone_is_used[drone];
     }
     model.addQConstr(drone_used_total <= num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available
+    //model.addQConstr(drone_used_total == 1, "drone_used_total_limit"); // limit the number of drones used to the number of drones available
 
     for (int drone = 0; drone < num_drones; drone++) {
       // drone basic variables
@@ -298,12 +301,12 @@ void Optimizer::optimize() {
       
       //model.addGenConstrIndicator(drone_is_used[drone], 0, covered_area_true[drone] <= 1.0 , "addGenConstrIndicator_drone_is_used");
 
-      operation_time_req[drone] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_SEMICONT, "operation_time_req_" + std::to_string(drone)); // total operation time including charging time
-      model.addQConstr(operation_time_req[drone] == operation_time[drone] + ((drone_is_used[drone] * CHARGING_TIME)), "operation_time_req_identity_" + std::to_string(drone)); // total operation time including charging time is equal to operation time plus charging time if the drone is used
       // number of charging cycles is operation time divided by maximum operation time
       charging_cycles[drone] = model.addVar(0.0, 20, 0.0, GRB_SEMIINT, "charging_cycles_" + std::to_string(drone)); // number of charging cycles for each drone
       model.addQConstr(charging_cycles[drone] == (operation_time[drone] - OPERATION_MAX_PER_CHARGING)*OPERATION_MAX_PER_CHARGING_INV, "charging_cycles_identity_" + std::to_string(drone)); // number of charging cycles is equal to operation time divided by maximum operation time
-
+      operation_time_req[drone] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_SEMICONT, "operation_time_req_" + std::to_string(drone)); // total operation time including charging time
+      model.addQConstr(operation_time_req[drone] == operation_time[drone] + ((drone_is_used[drone] * CHARGING_TIME))*charging_cycles[drone], "operation_time_req_identity_" + std::to_string(drone)); // total operation time including charging time is equal to operation time plus charging time if the drone is used
+      
     }
     // sum of covered_area_total = FIELD_AREA
     GRBLinExpr covered_area_total_sum = 0.0; 
@@ -313,10 +316,9 @@ void Optimizer::optimize() {
     model.addQConstr(covered_area_total_sum == FIELD_AREA, "covered_area_total_sum_constraint");
 
     // oeration time
-    GRBLinExpr operation_time_total = 0.0;
-    for (int drone = 0; drone < num_drones; drone++) {
-      operation_time_total += operation_time_req[drone];
-    }
+    // operation_time_total should be the maximum operation_time_req among all drones
+    GRBVar operation_time_total = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "operation_time_total");
+    model.addGenConstrMax(operation_time_total, operation_time_req.data(), num_drones, -GRB_INFINITY ,"operation_time_total_max");
 
     
     // sum of sensor power expressions
@@ -336,18 +338,18 @@ void Optimizer::optimize() {
     }
     GRBQuadExpr objective_expr = GRBQuadExpr();
     objective_expr = 1*total_energy_consumed + 
-                     1*drone_used_total;// + 
-                     1*operation_time_total;
+                     100*drone_used_total + 
+                     100*operation_time_total;
 
 
   //####################################################################################  optimization  ##################################################################################
   
     // objective optimization
     model.setObjective(objective_expr , GRB_MINIMIZE);//GRB_MAXIMIZE);//
-    model.set(GRB_DoubleParam_MIPGap, 0.05); // 5% optimality gap
+    model.set(GRB_DoubleParam_MIPGap, 0.01); // 5% optimality gap
     //model.set(GRB_DoubleParam_TimeLimit, 60); // 60 seconds time limit
     //model.set(GRB_IntParam_Threads, 4); // Use 4 threads
-    model.set(GRB_IntParam_Presolve, 2); // Aggressive presolve
+    //model.set(GRB_IntParam_Presolve, 2); // Aggressive presolve
     //model.set(GRB_DoubleParam_Heuristics, 0.9); // Increase heuristic effort
     
 
@@ -369,11 +371,11 @@ void Optimizer::optimize() {
           drone_set_fps_selector[drone * drone_set_fps.size() + i].set(GRB_DoubleAttr_Start, val);
       }
     }*/
-    model.set(GRB_IntParam_Cuts, 3);  //Generate more cuts
+    //model.set(GRB_IntParam_Cuts, 2);  //Generate more cuts
     //model.set(GRB_IntParam_CutPasses, 20); //Limit the number of cut passes
-    model.set(GRB_DoubleParam_Heuristics, 1.0); //Spend 50% of time on heuristics
-    model.set(GRB_IntParam_MIPFocus, 1); //Focus on finding feasible solutions
-    model.set(GRB_IntParam_RINS, 10); //Enable RINS heuristic with a frequency of 10 nodes
+    //model.set(GRB_DoubleParam_Heuristics, 1.0); //Spend 50% of time on heuristics
+    //model.set(GRB_IntParam_MIPFocus, 1); //Focus on finding feasible solutions
+    //model.set(GRB_IntParam_RINS, 10); //Enable RINS heuristic with a frequency of 10 nodes
 
     model.optimize();
   //####################################################################################  handle result ##################################################################################
@@ -484,7 +486,7 @@ void Optimizer::optimize() {
       }
     }
     // Export model for diagnostics
-    model.write("model.lp"); // Export model to LP file for inspection
+    //model.write("model.lp"); // Export model to LP file for inspection
   } catch (GRBException &e) {
     std::cout << "Gurobi exception caught in fifth block: " << e.getMessage() << " code: " << e.getErrorCode() << std::endl;
     return;

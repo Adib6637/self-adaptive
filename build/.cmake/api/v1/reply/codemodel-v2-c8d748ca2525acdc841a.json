@@ -6,7 +6,7 @@
 			[
 				{
 					"build" : ".",
-					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"jsonFile" : "directory-.-f5ebdc15457944623624.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.5"
@@ -19,7 +19,7 @@
 					]
 				}
 			],
-			"name" : "Debug",
+			"name" : "",
 			"projects" : 
 			[
 				{
@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "simulation::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-simulation-Debug-a5ebfd7d51153b218ef5.json",
+					"jsonFile" : "target-simulation-39fd25a02d00f2272c4f.json",
 					"name" : "simulation",
 					"projectIndex" : 0
 				}
@@ -49,12 +49,12 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build",
-		"source" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation"
+		"build" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive/build",
+		"source" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive"
 	},
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 6
+		"minor" : 7
 	}
 }

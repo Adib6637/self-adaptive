@@ -46,29 +46,23 @@
 	"compileGroups" : 
 	[
 		{
-			"compileCommandFragments" : 
-			[
-				{
-					"fragment" : "-g"
-				}
-			],
 			"includes" : 
 			[
 				{
 					"backtrace" : 3,
-					"path" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/include"
+					"path" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive/include"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/usr/include/eigen3"
+					"path" : "/opt/software/pc2/EB-SW/software/Eigen/3.4.0-GCCcore-13.3.0/include"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/lib/systemc/install/include"
+					"path" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/systemc/install/include"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/opt/gurobi1202/linux64/include"
+					"path" : "/opt/software/pc2/GUROBI/gurobi1202/linux64/include"
 				}
 			],
 			"language" : "CXX",
@@ -93,29 +87,25 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-g",
-				"role" : "flags"
-			},
-			{
 				"fragment" : "",
 				"role" : "flags"
 			},
 			{
-				"fragment" : "-L/opt/gurobi1202/linux64/lib",
+				"fragment" : "-L/opt/software/pc2/GUROBI/gurobi1202/linux64/lib",
 				"role" : "libraryPath"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/lib/systemc/install/lib:/opt/gurobi1202/linux64/lib",
+				"fragment" : "-Wl,-rpath,/scratch/hpc-prf-ekiapp/sheikh/exploration/systemc/install/lib64:/opt/software/pc2/GUROBI/gurobi1202/linux64/lib",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "/lib/systemc/install/lib/libsystemc.so",
+				"fragment" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/systemc/install/lib64/libsystemc.so",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "/opt/gurobi1202/linux64/lib/libgurobi_c++.a",
+				"fragment" : "/opt/software/pc2/GUROBI/gurobi1202/linux64/lib/libgurobi_c++.a",
 				"role" : "libraries"
 			},
 			{

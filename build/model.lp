@@ -1,5 +1,4 @@
 \ LP format - for model browsing. Use MPS format to capture full model detail.
-\ Signature: 0x46feba2280008247
 Minimize
   drone_used_0 + drone_used_1 + drone_used_2 + drone_used_3 + drone_used_4
    + 0 sensor_fps_2_0 + 0 sensor_pix_2_0 + 0 sensor_pix_x_inv_0
@@ -50,16 +49,16 @@ Subject To
    - covered_area_x_t0_0 * number_of_place_covered_0 ] = 0
  operation_time_identity_0: operation_time_0 + [
    - drone_v_true_inv_0 * covered_distance_0 ] = 0
- actuator_power_positive_0: 1.080110396930479 drone_v_0
-   - 0.6584950850618843 drone_v_2_0 + 0.3070437807008932 drone_v_3_0
-   + 0.00253844577140895 drone_h_0 + [ ] >= 0.038427666955447
- drone_pa_consumption_identity_0: - 864.0883175443832 drone_v_0
-   + 526.7960680495074 drone_v_2_0 - 245.6350245607146 drone_v_3_0
-   - 2.03075661712716 drone_h_0 + drone_pa_consumption_0 + [ ]
-   = 319.2578664356424
- drone_ps_consumption_identity_0: - 5.67930178679298 sensor_fps_0
-   - 8.508736690250911 sensor_pix_0 + drone_ps_consumption_0 + [ ]
-   = 4.306770108137387
+ actuator_power_positive_0: 1.076926165335457 drone_v_0
+   - 0.6565098249938612 drone_v_2_0 + 0.306118091548782 drone_v_3_0
+   + 0.00247314618404392 drone_h_0 + [ ] >= 0.2096125814661343
+ drone_pa_consumption_identity_0: - 861.5409322683654 drone_v_0
+   + 525.2078599950889 drone_v_2_0 - 244.8944732390256 drone_v_3_0
+   - 1.978516947235133 drone_h_0 + drone_pa_consumption_0 + [ ]
+   = 182.3099348270926
+ drone_ps_consumption_identity_0: - 6.267389498042036 sensor_fps_0
+   - 34.40582216259665 sensor_pix_0 + drone_ps_consumption_0 + [ ]
+   = -0.8703970046105134
  drone_energy_consumption_identity_0: drone_energy_consumption_0 + [
    - operation_time_0 * drone_pa_consumption_0
    - operation_time_0 * drone_ps_consumption_0 ] = 0
@@ -109,16 +108,16 @@ Subject To
    - covered_area_x_t0_1 * number_of_place_covered_1 ] = 0
  operation_time_identity_1: operation_time_1 + [
    - drone_v_true_inv_1 * covered_distance_1 ] = 0
- actuator_power_positive_1: 1.080110396930479 drone_v_1
-   - 0.6584950850618843 drone_v_2_1 + 0.3070437807008932 drone_v_3_1
-   + 0.00253844577140895 drone_h_1 + [ ] >= 0.038427666955447
- drone_pa_consumption_identity_1: - 864.0883175443832 drone_v_1
-   + 526.7960680495074 drone_v_2_1 - 245.6350245607146 drone_v_3_1
-   - 2.03075661712716 drone_h_1 + drone_pa_consumption_1 + [ ]
-   = 319.2578664356424
- drone_ps_consumption_identity_1: - 5.67930178679298 sensor_fps_1
-   - 8.508736690250911 sensor_pix_1 + drone_ps_consumption_1 + [ ]
-   = 4.306770108137387
+ actuator_power_positive_1: 1.076926165335457 drone_v_1
+   - 0.6565098249938612 drone_v_2_1 + 0.306118091548782 drone_v_3_1
+   + 0.00247314618404392 drone_h_1 + [ ] >= 0.2096125814661343
+ drone_pa_consumption_identity_1: - 861.5409322683654 drone_v_1
+   + 525.2078599950889 drone_v_2_1 - 244.8944732390256 drone_v_3_1
+   - 1.978516947235133 drone_h_1 + drone_pa_consumption_1 + [ ]
+   = 182.3099348270926
+ drone_ps_consumption_identity_1: - 6.267389498042036 sensor_fps_1
+   - 34.40582216259665 sensor_pix_1 + drone_ps_consumption_1 + [ ]
+   = -0.8703970046105134
  drone_energy_consumption_identity_1: drone_energy_consumption_1 + [
    - operation_time_1 * drone_pa_consumption_1
    - operation_time_1 * drone_ps_consumption_1 ] = 0
@@ -168,16 +167,16 @@ Subject To
    - covered_area_x_t0_2 * number_of_place_covered_2 ] = 0
  operation_time_identity_2: operation_time_2 + [
    - drone_v_true_inv_2 * covered_distance_2 ] = 0
- actuator_power_positive_2: 1.080110396930479 drone_v_2
-   - 0.6584950850618843 drone_v_2_2 + 0.3070437807008932 drone_v_3_2
-   + 0.00253844577140895 drone_h_2 + [ ] >= 0.038427666955447
- drone_pa_consumption_identity_2: - 864.0883175443832 drone_v_2
-   + 526.7960680495074 drone_v_2_2 - 245.6350245607146 drone_v_3_2
-   - 2.03075661712716 drone_h_2 + drone_pa_consumption_2 + [ ]
-   = 319.2578664356424
- drone_ps_consumption_identity_2: - 5.67930178679298 sensor_fps_2
-   - 8.508736690250911 sensor_pix_2 + drone_ps_consumption_2 + [ ]
-   = 4.306770108137387
+ actuator_power_positive_2: 1.076926165335457 drone_v_2
+   - 0.6565098249938612 drone_v_2_2 + 0.306118091548782 drone_v_3_2
+   + 0.00247314618404392 drone_h_2 + [ ] >= 0.2096125814661343
+ drone_pa_consumption_identity_2: - 861.5409322683654 drone_v_2
+   + 525.2078599950889 drone_v_2_2 - 244.8944732390256 drone_v_3_2
+   - 1.978516947235133 drone_h_2 + drone_pa_consumption_2 + [ ]
+   = 182.3099348270926
+ drone_ps_consumption_identity_2: - 6.267389498042036 sensor_fps_2
+   - 34.40582216259665 sensor_pix_2 + drone_ps_consumption_2 + [ ]
+   = -0.8703970046105134
  drone_energy_consumption_identity_2: drone_energy_consumption_2 + [
    - operation_time_2 * drone_pa_consumption_2
    - operation_time_2 * drone_ps_consumption_2 ] = 0
@@ -227,16 +226,16 @@ Subject To
    - covered_area_x_t0_3 * number_of_place_covered_3 ] = 0
  operation_time_identity_3: operation_time_3 + [
    - drone_v_true_inv_3 * covered_distance_3 ] = 0
- actuator_power_positive_3: 1.080110396930479 drone_v_3
-   - 0.6584950850618843 drone_v_2_3 + 0.3070437807008932 drone_v_3_3
-   + 0.00253844577140895 drone_h_3 + [ ] >= 0.038427666955447
- drone_pa_consumption_identity_3: - 864.0883175443832 drone_v_3
-   + 526.7960680495074 drone_v_2_3 - 245.6350245607146 drone_v_3_3
-   - 2.03075661712716 drone_h_3 + drone_pa_consumption_3 + [ ]
-   = 319.2578664356424
- drone_ps_consumption_identity_3: - 5.67930178679298 sensor_fps_3
-   - 8.508736690250911 sensor_pix_3 + drone_ps_consumption_3 + [ ]
-   = 4.306770108137387
+ actuator_power_positive_3: 1.076926165335457 drone_v_3
+   - 0.6565098249938612 drone_v_2_3 + 0.306118091548782 drone_v_3_3
+   + 0.00247314618404392 drone_h_3 + [ ] >= 0.2096125814661343
+ drone_pa_consumption_identity_3: - 861.5409322683654 drone_v_3
+   + 525.2078599950889 drone_v_2_3 - 244.8944732390256 drone_v_3_3
+   - 1.978516947235133 drone_h_3 + drone_pa_consumption_3 + [ ]
+   = 182.3099348270926
+ drone_ps_consumption_identity_3: - 6.267389498042036 sensor_fps_3
+   - 34.40582216259665 sensor_pix_3 + drone_ps_consumption_3 + [ ]
+   = -0.8703970046105134
  drone_energy_consumption_identity_3: drone_energy_consumption_3 + [
    - operation_time_3 * drone_pa_consumption_3
    - operation_time_3 * drone_ps_consumption_3 ] = 0
@@ -286,16 +285,16 @@ Subject To
    - covered_area_x_t0_4 * number_of_place_covered_4 ] = 0
  operation_time_identity_4: operation_time_4 + [
    - drone_v_true_inv_4 * covered_distance_4 ] = 0
- actuator_power_positive_4: 1.080110396930479 drone_v_4
-   - 0.6584950850618843 drone_v_2_4 + 0.3070437807008932 drone_v_3_4
-   + 0.00253844577140895 drone_h_4 + [ ] >= 0.038427666955447
- drone_pa_consumption_identity_4: - 864.0883175443832 drone_v_4
-   + 526.7960680495074 drone_v_2_4 - 245.6350245607146 drone_v_3_4
-   - 2.03075661712716 drone_h_4 + drone_pa_consumption_4 + [ ]
-   = 319.2578664356424
- drone_ps_consumption_identity_4: - 5.67930178679298 sensor_fps_4
-   - 8.508736690250911 sensor_pix_4 + drone_ps_consumption_4 + [ ]
-   = 4.306770108137387
+ actuator_power_positive_4: 1.076926165335457 drone_v_4
+   - 0.6565098249938612 drone_v_2_4 + 0.306118091548782 drone_v_3_4
+   + 0.00247314618404392 drone_h_4 + [ ] >= 0.2096125814661343
+ drone_pa_consumption_identity_4: - 861.5409322683654 drone_v_4
+   + 525.2078599950889 drone_v_2_4 - 244.8944732390256 drone_v_3_4
+   - 1.978516947235133 drone_h_4 + drone_pa_consumption_4 + [ ]
+   = 182.3099348270926
+ drone_ps_consumption_identity_4: - 6.267389498042036 sensor_fps_4
+   - 34.40582216259665 sensor_pix_4 + drone_ps_consumption_4 + [ ]
+   = -0.8703970046105134
  drone_energy_consumption_identity_4: drone_energy_consumption_4 + [
    - operation_time_4 * drone_pa_consumption_4
    - operation_time_4 * drone_ps_consumption_4 ] = 0

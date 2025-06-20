@@ -61,3 +61,26 @@ for col in numeric_cols:
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+# 4. Plot total energy vs number of drones used per run
+# Get total energy per run
+energy_per_run = df.groupby('counter')['energy'].sum()
+# Get number of drones used per run (already computed)
+# drones_used_per_run
+fig, ax1 = plt.subplots(figsize=(10, 5))
+color = 'tab:blue'
+ax1.set_xlabel('Run Counter')
+ax1.set_ylabel('Total Energy', color=color)
+ax1.plot(energy_per_run.index, energy_per_run.values, marker='o', color=color, label='Total Energy')
+ax1.tick_params(axis='y', labelcolor=color)
+
+ax2 = ax1.twinx()
+color = 'tab:orange'
+ax2.set_ylabel('Number of Drones Used', color=color)
+ax2.plot(drones_used_per_run.index, drones_used_per_run.values, marker='s', color=color, label='Drones Used')
+ax2.tick_params(axis='y', labelcolor=color)
+
+plt.title('Total Energy vs Number of Drones Used per Run')
+fig.tight_layout()
+plt.grid(True)
+plt.show()

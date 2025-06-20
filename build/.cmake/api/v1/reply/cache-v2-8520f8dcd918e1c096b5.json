@@ -39,11 +39,11 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
 				}
 			],
 			"type" : "STRING",
-			"value" : "Debug"
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_CACHEFILE_DIR",
@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build"
+			"value" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -79,7 +79,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "28"
+			"value" : "29"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -119,7 +119,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/cmake"
+			"value" : "/opt/software/pc2/EB-SW/software/CMake/3.29.3-GCCcore-13.3.0/bin/cmake"
 		},
 		{
 			"name" : "CMAKE_CPACK_COMMAND",
@@ -131,7 +131,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/cpack"
+			"value" : "/opt/software/pc2/EB-SW/software/CMake/3.29.3-GCCcore-13.3.0/bin/cpack"
 		},
 		{
 			"name" : "CMAKE_CTEST_COMMAND",
@@ -143,7 +143,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/ctest"
+			"value" : "/opt/software/pc2/EB-SW/software/CMake/3.29.3-GCCcore-13.3.0/bin/ctest"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER",
@@ -155,11 +155,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "CXX compiler"
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/g++"
+			"value" : "/opt/software/pc2/EB-SW/software/GCCcore/13.3.0/bin/c++"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -175,7 +175,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar-13"
+			"value" : "/opt/software/pc2/EB-SW/software/GCCcore/13.3.0/bin/gcc-ar"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib-13"
+			"value" : "/opt/software/pc2/EB-SW/software/GCCcore/13.3.0/bin/gcc-ranlib"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -283,11 +283,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "C compiler"
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc"
+			"value" : "/opt/software/pc2/EB-SW/software/GCCcore/13.3.0/bin/cc"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_AR",
@@ -303,7 +303,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar-13"
+			"value" : "/opt/software/pc2/EB-SW/software/GCCcore/13.3.0/bin/gcc-ar"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_RANLIB",
@@ -319,7 +319,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib-13"
+			"value" : "/opt/software/pc2/EB-SW/software/GCCcore/13.3.0/bin/gcc-ranlib"
 		},
 		{
 			"name" : "CMAKE_C_FLAGS",
@@ -416,6 +416,18 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "CMAKE_DLLTOOL-NOTFOUND"
+		},
+		{
+			"name" : "CMAKE_EDIT_COMMAND",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to cache edit program executable."
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "/opt/software/pc2/EB-SW/software/CMake/3.29.3-GCCcore-13.3.0/bin/ccmake"
 		},
 		{
 			"name" : "CMAKE_EXECUTABLE_FORMAT",
@@ -519,11 +531,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Enable/Disable output of compile commands during generation."
 				}
 			],
 			"type" : "BOOL",
-			"value" : "TRUE"
+			"value" : ""
 		},
 		{
 			"name" : "CMAKE_EXTRA_GENERATOR",
@@ -547,7 +559,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build/CMakeFiles/pkgRedirects"
+			"value" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive/build/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -607,7 +619,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation"
+			"value" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -631,7 +643,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "1"
+			"value" : "0"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -895,7 +907,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/share/cmake-3.28"
+			"value" : "/opt/software/pc2/EB-SW/software/CMake/3.29.3-GCCcore-13.3.0/share/cmake-3.29"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1159,7 +1171,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/usr/share/eigen3/cmake"
+			"value" : "/opt/software/pc2/EB-SW/software/Eigen/3.4.0-GCCcore-13.3.0/share/eigen3/cmake"
 		},
 		{
 			"name" : "_CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED",
@@ -1183,7 +1195,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build"
+			"value" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive/build"
 		},
 		{
 			"name" : "simulation_IS_TOP_LEVEL",
@@ -1207,7 +1219,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation"
+			"value" : "/scratch/hpc-prf-ekiapp/sheikh/exploration/self-adaptive"
 		}
 	],
 	"kind" : "cache",
