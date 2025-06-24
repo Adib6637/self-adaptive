@@ -2,12 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Read the CSV file
-#file_path = '../log/log_loss.csv'  # Change this to the path of your CSV file
-file_path = '../Simulation/log/log_loss.csv'  # Change this to the path of your CSV file
+file_path = '../log/log_loss.csv'  # Change this to the path of your CSV file
+#file_path = '../Simulation/log/log_loss.csv'  # Change this to the path of your CSV file
 df = pd.read_csv(file_path)
 
 # Assuming the columns are named 'Model_1' and 'Model_2' (adjust names as necessary)
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(5, 5))
 
 df.columns = ['Model_1', 'Model_2','counter']
 #df_subset = df.iloc[:500]

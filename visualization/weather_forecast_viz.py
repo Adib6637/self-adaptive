@@ -7,7 +7,7 @@ df = pd.read_csv("d:/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simu
 # Select only rows with index 1, 4, 7, ...
 df = df.iloc[range(1, len(df), 4)].reset_index(drop=True)
 # Plot wind speed and direction over time
-fig, ax1 = plt.subplots(figsize=(10, 6))
+fig, ax1 = plt.subplots(figsize=(5, 5))
 
 color = 'tab:blue'
 ax1.set_xlabel('Index')
@@ -21,7 +21,7 @@ ax2.set_ylabel('Wind Direction (deg)', color=color)
 ax2.plot(df.index, df['theta_wind'], color=color, label='Wind Direction')
 ax2.tick_params(axis='y', labelcolor=color)
 
-plt.title('Wind Speed and Direction Over Time')
+plt.title('Wind Speed and Wind Direction per Run')
 fig.tight_layout()
 plt.show()
 
