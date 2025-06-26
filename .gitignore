@@ -1,4 +1,6 @@
 *.csv
-*/build/*
 *.txt
+build/
+trash/
+run.sh
 
