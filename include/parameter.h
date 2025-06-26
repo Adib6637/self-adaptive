@@ -139,7 +139,7 @@
 
 // simulation environment 
 #define NUMBER_DRONE_MAX    5               // Number of drones
-#define FIELD_AREA          100000.0       // Field area in m^2
+#define FIELD_AREA          100000.0       // Field area in m^2  https://sugarindustry.info/paper/15166/
 #define FIELD_AREA_INV      (1.0 / FIELD_AREA) // Inverse of field area
 #define GRAVITY             9.81            // Gravity constant in m/s^2
 #define H_REF               100.0           // Reference height in meters

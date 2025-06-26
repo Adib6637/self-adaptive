@@ -54,14 +54,14 @@ void Optimizer::optimize() {
     // model_param for drone typr (for now only conside one type)
 
     #ifndef FIX_MODEL_PARAMETER
-    double pa_eta = model_parameter[0].read();  
-    double pa_delta = model_parameter[1].read(); 
-    double pa_alpha = model_parameter[2].read(); 
-    double pa_beta = model_parameter[3].read(); 
+    float pa_eta = model_parameter[0].read();  
+    float pa_delta = model_parameter[1].read(); 
+    float pa_alpha = model_parameter[2].read(); 
+    float pa_beta = model_parameter[3].read(); 
 
-    double ps_a = model_parameter[4].read();
-    double ps_b = model_parameter[5].read();
-    double ps_c = model_parameter[6].read();
+    float ps_a = model_parameter[4].read();
+    float ps_b = model_parameter[5].read();
+    float ps_c = model_parameter[6].read();
     #else
     double fix_model_parameter[] = {0.31862743382724822982510204383289, 0.2127602615282839781940538159688, 0.097328390658043009708855208828027, 0.0021011339810415512012464755997598, 1.1463925428785151083843629749026, 10.212336874294889454972690145951, -1.88007013107074638647020492499}; 
     double pa_eta = fix_model_parameter[0]; //model_parameter[0].read();  
