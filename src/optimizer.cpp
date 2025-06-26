@@ -64,7 +64,7 @@ void Optimizer::optimize() {
 
     // model_param for drone typr (for now only conside one type)
     
-    #define FIX 
+    //#define FIX 
 
     #ifndef FIX
     double pa_eta = model_parameter[0].read();  
@@ -183,8 +183,8 @@ void Optimizer::optimize() {
         drone_is_used[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "drone_used_" + std::to_string(drone));
         drone_used_total += drone_is_used[drone];
     }
-    model.addQConstr(drone_used_total <= num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available
-    //model.addQConstr(drone_used_total == 1, "drone_used_total_limit"); // limit the number of drones used to the number of drones available
+    //model.addQConstr(drone_used_total <= num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available          case_x_1
+    model.addQConstr(drone_used_total == 2, "drone_used_total_limit"); // limit the number of drones used to the number of drones available                     case_x_2 case_x_3
 
     for (int drone = 0; drone < num_drones; drone++) {
       // drone basic variables
