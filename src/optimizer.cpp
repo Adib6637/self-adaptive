@@ -22,8 +22,11 @@ void Optimizer::optimize() {
   }
   try{
 
-  // debugging
+  
   //#define DEBUG
+  #define SUCCESS_LIMIT 45
+
+
   #ifdef DEBUG
   if (success > 42) return;
   std::cout << "########################################################################################################################################################################" << std::endl;
@@ -38,7 +41,14 @@ void Optimizer::optimize() {
   std::cout << std::endl;
   std::cout << "########################################################################################################################################################################" << std::endl;
   #endif // DEBUG
-  // end debugging
+
+  #ifdef SUCCESS_LIMIT
+  if (success== SUCCESS_LIMIT) std::cout << "Success limit reached, stopping optimization." << std::endl;
+  if (success > SUCCESS_LIMIT) {
+      
+      return; // Stop optimization if success limit is reached
+  }
+  #endif // SUCCESS_LIMIT
 
   //####################################################################################### Constants ###################################################################################
   
@@ -352,15 +362,17 @@ void Optimizer::optimize() {
     model.addGenConstrMax(operation_time_total, operation_time.data(), num_drones, -GRB_INFINITY ,"operation_time_total_max");
 
  
-    // sum of energy expressions as objective
+    // sum of energy
     GRBQuadExpr total_energy_consumed = GRBQuadExpr();
     for (int drone = 0; drone < num_drones; drone++) {
       total_energy_consumed += drone_energy_consumption[drone]*drone_is_used[drone]; // energy consumption is only considered if the drone is used
     }
+
+    // objective
     GRBQuadExpr objective_expr = GRBQuadExpr();
-    objective_expr = 1*total_energy_consumed + 
-                     1*drone_used_total + 
-                     100000000*operation_time_total;
+    objective_expr = OBJECTIVE_ENERGY_WEIGHT*total_energy_consumed + 
+                     OBJECTIVE_DRONE_WEIGHT*drone_used_total + 
+                     OBJECTIVE_TIME_WEIGHT*operation_time_total;
 
   //####################################################################################  optimization  ##################################################################################
   
