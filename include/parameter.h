@@ -150,11 +150,11 @@
 #define OPERATION_MAX_PER_CHARGING_INV (1.0 / OPERATION_MAX_PER_CHARGING) // Inverse of maximum operation time per charging in seconds
 #define CHARGING_TIME 1200
 
-#define OPTIMIZER_ON false
+#define OPTIMIZER_ON true
 #define CONSTRAINT_TUNER_ON false
 #define MODEL_LEARNER_ON true
 #define MANAGED_SYSTEM_ON true
-#define DYNAMIC_WEATHER true
+#define DYNAMIC_WEATHER false
 
 
 
