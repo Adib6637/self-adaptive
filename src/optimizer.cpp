@@ -22,26 +22,6 @@ void Optimizer::optimize() {
   }
   try{
 
-  
-  //#define DEBUG
-  #define SUCCESS_LIMIT 45
-
-
-  #ifdef DEBUG
-  if (success > 42) return;
-  std::cout << "########################################################################################################################################################################" << std::endl;
-  std::cout << "Optimizer started with counter: " << counter << std::endl;
-  std::cout << "Weather prediction: " << weather_prediction[0].read() << ", " << weather_prediction[1].read() << std::endl;
-  std::cout << "Model parameters: ";
-  std::cout << std::setprecision(32); // Force full precision
-  for (int i = 0; i < 7; ++i) {
-      std::cout << model_parameter[i].read() << ", ";
-  }
-  std::cout << std::setprecision(6); // Reset to default precision if needed
-  std::cout << std::endl;
-  std::cout << "########################################################################################################################################################################" << std::endl;
-  #endif // DEBUG
-
   #ifdef SUCCESS_LIMIT
   if (success== SUCCESS_LIMIT) std::cout << "Success limit reached, stopping optimization." << std::endl;
   if (success > SUCCESS_LIMIT) {
@@ -71,12 +51,9 @@ void Optimizer::optimize() {
     // weather prediction
     double wp_v_wind = (weather_prediction[0].read()-WIND_SPEED_MIN)/WIND_SPEED_MAX;         
     double wp_theta_wind = weather_prediction[1].read();   
-
     // model_param for drone typr (for now only conside one type)
-    
-    //#define FIX 
 
-    #ifndef FIX
+    #ifndef FIX_MODEL_PARAMETER
     double pa_eta = model_parameter[0].read();  
     double pa_delta = model_parameter[1].read(); 
     double pa_alpha = model_parameter[2].read(); 
@@ -114,7 +91,9 @@ void Optimizer::optimize() {
   
 
     GRBEnv env = GRBEnv(true);
-    env.set(GRB_IntParam_OutputFlag, 0);
+
+    env.set(GRB_IntParam_OutputFlag, OUTPUT_FLAG);
+
     env.start();
     GRBModel model = GRBModel(env);
     model.set(GRB_IntParam_NonConvex, 2);
@@ -347,7 +326,6 @@ void Optimizer::optimize() {
       // energy
       drone_energy_consumption[drone] = model.addVar(0.0, GRB_INFINITY , 0.0, GRB_SEMICONT, "drone_energy_consumption_" + std::to_string(drone)); // energy consumption for each drone
       model.addQConstr(drone_energy_consumption[drone] == operation_time[drone] * (drone_pa_consumption[drone] + drone_ps_consumption[drone]), "drone_energy_consumption_identity_" + std::to_string(drone)); 
- 
     }
 
     // sum of covered_area_total
@@ -378,9 +356,9 @@ void Optimizer::optimize() {
   
     // objective optimization
     model.setObjective(objective_expr , GRB_MINIMIZE);//GRB_MAXIMIZE);//
-    model.set(GRB_DoubleParam_MIPGap, 0.01); // 5% optimality gap
+    model.set(GRB_DoubleParam_MIPGap, OPTIMALITY_GAP); // 5% optimality gap
     //model.set(GRB_DoubleParam_TimeLimit, 60); // 60 seconds time limit
-    //model.set(GRB_IntParam_Threads, 4); // Use 4 threads
+    model.set(GRB_IntParam_Threads, 8); // Use 4 threads
     //model.set(GRB_IntParam_Presolve, 2); // Aggressive presolve
     //model.set(GRB_IntParam_Cuts, 2);  //Generate more cuts
     //model.set(GRB_IntParam_CutPasses, 20); //Limit the number of cut passes

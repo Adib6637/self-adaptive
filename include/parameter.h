@@ -11,11 +11,18 @@
 #define MODEL_LEARNER_ON        true
 #define MANAGED_SYSTEM_ON       true
 #define DYNAMIC_WEATHER         false
+#define SUCCESS_LIMIT           45
+//#define FIX_MODEL_PARAMETER     
+#define OUTPUT_FLAG             1 // 0: no output, 1: output to console, 2: output to file
 
 // optimization objective
-#define OBJECTIVE_ENERGY_WEIGHT 1
-#define OBJECTIVE_DRONE_WEIGHT  100
-#define OBJECTIVE_TIME_WEIGHT   100
+#define OBJECTIVE_ENERGY_WEIGHT 1.0
+#define OBJECTIVE_DRONE_WEIGHT  1000000.0
+#define OBJECTIVE_TIME_WEIGHT   1000.0
+
+// optimization parameters
+#define OPTIMALITY_GAP          0.01
+
 
 // power actuator dataset
 #define WIND_SPEED              std::get<2>
@@ -132,20 +139,20 @@
 
 // simulation environment 
 #define NUMBER_DRONE_MAX    5               // Number of drones
-#define FIELD_AREA          1000000.0       // Field area in m^2
+#define FIELD_AREA          100000.0       // Field area in m^2
 #define FIELD_AREA_INV      (1.0 / FIELD_AREA) // Inverse of field area
 #define GRAVITY             9.81            // Gravity constant in m/s^2
 #define H_REF               100.0           // Reference height in meters
 
 // resolution 
-#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.00035
-#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.00024
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.000004
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.000002   //sample : (5cmx5cm)/(32x32)
 
 // drone constraints
 #define DRONE_MASS          3.680       // Drone mass in kg
 #define MASS_MAX            10.0        // Maximum mass
 #define MASS_MIN            0.0         // Minimum mass
-#define DRONE_SET_PIX       {307200,1433600 , 2240000}
+#define DRONE_SET_PIX       {307200,1433600}// , 2240000}
 #define DRONE_SET_PIX_X     {640,1280 ,1600 }
 #define DRONE_SET_PIX_Y     {480,1120 ,1400 }
 #define DRONE_SET_FPS       {30, 60, 90} 
