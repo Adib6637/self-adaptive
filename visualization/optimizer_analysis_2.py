@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the results
-df = pd.read_csv("../Simulation/log/log_optimization_results.csv")
+df = pd.read_csv("../log/log_optimization_results.csv")
 
 # 1. Number of drones used per run
 drones_used_per_run = df[df['used'] > 0].groupby('counter')['drone'].count()

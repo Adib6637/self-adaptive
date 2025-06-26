@@ -3,12 +3,15 @@ cmake_minimum_required(VERSION 3.5)
 project(simulation)
 
 # SystemC configuration
-set(SYSTEMC_HOME "/scratch/hpc-prf-ekiapp/sheikh/exploration/systemc/install")
+#set(SYSTEMC_HOME "/scratch/hpc-prf-ekiapp/sheikh/exploration/systemc/install")
+set(SYSTEMC_HOME "/lib/systemc/install")
 set(SYSTEMC_INCLUDE_DIR ${SYSTEMC_HOME}/include)
-set(SYSTEMC_LIBRARY_DIR ${SYSTEMC_HOME}/lib64)
+#set(SYSTEMC_LIBRARY_DIR ${SYSTEMC_HOME}/lib64)
+set(SYSTEMC_LIBRARY_DIR ${SYSTEMC_HOME}/lib)
 
 # Gurobi configuration
-set(GUROBI_HOME /opt/software/pc2/GUROBI/gurobi1202/linux64)
+#set(GUROBI_HOME /opt/software/pc2/GUROBI/gurobi1202/linux64)
+set(GUROBI_HOME "/opt/gurobi1202/linux64")
 set(GUROBI_INCLUDE_DIRS ${GUROBI_HOME}/include)
 set(GUROBI_LIBRARY_DIR ${GUROBI_HOME}/lib)
 set(GUROBI_LIBRARIES

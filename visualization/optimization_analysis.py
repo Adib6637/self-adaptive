@@ -1,65 +1,59 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load your CSV file
-try:
-    df = pd.read_csv("../log/log_optimization_results.csv")
-except FileNotFoundError:
-    df = pd.read_csv("../Simulation/log/log_optimization_results.csv")
-    
+# --- Configuration ---
+CSV_PATHS = [
+    "../log/log_optimization_results.csv",
+    "../Simulation/log/log_optimization_results.csv"
+]
+NUMERIC_COLS = [
+    #'v', 'v_true', 'h', 'fps', 'pix', 'pix_x', 'pix_y',
+    #'covered_area_x_t0', 'covered_area_y_t0', 'covered_area_total_t0',
+    #'covered_area_total', 'covered_area_true', 'number_of_place_covered',
+    #'covered_distance',
+    'operation_time',
+    'pa_consumption', 'ps_consumption',
+    'power', 'energy', 'charging_cycles',
+    'operation_time_req'
+]
+COUNTER_RANGE = (24, 43)
 
+x_size = 5
+y_size = 5
 
+# --- Data Loading ---
+df = None
+for path in CSV_PATHS:
+    try:
+        df = pd.read_csv(path)
+        break
+    except FileNotFoundError:
+        continue
+if df is None:
+    raise FileNotFoundError("CSV file not found in any of the specified paths.")
 
-# Make counter relative (1, 2, 3, ...)
+# --- Preprocessing ---
 unique_counters = sorted(df['counter'].unique())
 counter_map = {old: new for new, old in enumerate(unique_counters, start=1)}
 df['counter'] = df['counter'].map(counter_map)
-
-# Filter to only include runs 0 to 18
-# If your counters are 1-based after mapping, use 1 to 18 instead
-# If you want 0-based, adjust accordingly
-# Here, assuming counters are 1-based after mapping
-
-#df = df[df['counter'].between(24, 43)]
-df = df[df['counter'].between(24, 43)]
-
-# Prune the data: only keep runs where counter is 1, 4, 7, ...
-#df = df[df['counter'] % 4 == 1]
-
-# Get unique counters (runs)
+df = df[df['counter'].between(*COUNTER_RANGE)]
+# Only keep counters 1, 4, 7, 10, ...
+df = df[(df['counter'] - 1) % 4 == 0]
 counters = sorted(df['counter'].unique())
 num_drones = df['drone'].nunique()
+counter_min = df['counter'].min()
 
-# 1. Plot number of drones used per run
-drones_used_per_run = df[df['used'] > 0].groupby('counter')['drone'].count()
-plt.figure(figsize=(8, 4))
-plt.plot(drones_used_per_run.index, drones_used_per_run.values, marker='o')
-plt.xlabel('Run Counter')
-plt.ylabel('Number of Drones Used')
-plt.title('Number of Drones Used per Run')
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
-# 2. Plot all numeric columns per drone
-numeric_cols = [
-    'v', 'v_true', 'h', 'fps', 'pix', 'pix_x', 'pix_y',
-    'covered_area_x_t0', 'covered_area_y_t0', 'covered_area_total_t0',
-    'covered_area_total', 'covered_area_true', 'number_of_place_covered',
-    'covered_distance', 'operation_time', 'pa_consumption', 'ps_consumption',
-    'power', 'energy', 'charging_cycles', 'operation_time_req'
-]
-
-for col in numeric_cols:
-    plt.figure(figsize=(10, 5))
+# --- Helper Plot Functions ---
+def plot_per_drone(col):
+    plt.figure(figsize=(x_size, y_size))
     for drone_id in df['drone'].unique():
         plt.plot(
-            df[df['drone'] == drone_id]['counter'],
+            df[df['drone'] == drone_id]['counter'] - counter_min,
             df[df['drone'] == drone_id][col],
             marker='o',
             label=f'Drone {drone_id}'
         )
-    plt.xlabel('Run Counter')
+    plt.xlabel('Run Counter (reset to 0)')
     plt.ylabel(col.replace('_', ' ').title())
     plt.title(f'{col.replace("_", " ").title()} per Drone')
     plt.legend()
@@ -67,71 +61,87 @@ for col in numeric_cols:
     plt.tight_layout()
     plt.show()
 
-# 3. Plot total values per run (sum over all drones)
-for col in numeric_cols:
-    plt.figure(figsize=(8, 4))
+def plot_total_per_run(col):
+    plt.figure(figsize=(x_size, y_size))
     totals = df.groupby('counter')[col].sum()
-    plt.plot(totals.index, totals.values, marker='s', color='black')
-    plt.xlabel('Run Counter')
+    plt.plot(totals.index - counter_min, totals.values, marker='s', color='black')
+    plt.xlabel('Run Counter (reset to 0)')
     plt.ylabel(f'Total {col.replace("_", " ").title()}')
     plt.title(f'Total {col.replace("_", " ").title()} per Run')
     plt.grid(True)
     plt.tight_layout()
     plt.show()
 
-# 4. Plot total energy vs number of drones used per run
-# Get total energy per run
+# --- Analysis & Plots ---
+
+# 1. Number of drones used per run
+drones_used_per_run = df[df['used'] > 0].groupby('counter')['drone'].count()
+"""
+plt.figure(figsize=(8, 4))
+plt.plot(drones_used_per_run.index - counter_min, drones_used_per_run.values, marker='o')
+plt.xlabel('Run Counter (reset to 0)')
+plt.ylabel('Number of Drones Used')
+plt.title('Number of Drones Used per Run')
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+"""
+
+
+# 2. Numeric columns per drone
+for col in NUMERIC_COLS:
+    plot_per_drone(col)
+
+# 3. Total values per run
+for col in NUMERIC_COLS:
+    plot_total_per_run(col)
+
+
+
+# 4. Total energy vs number of drones used per run
 energy_per_run = df.groupby('counter')['energy'].sum()
-# Get number of drones used per run (already computed)
-# drones_used_per_run
-fig, ax1 = plt.subplots(figsize=(10, 5))
-color = 'tab:blue'
-ax1.set_xlabel('Run Counter')
-ax1.set_ylabel('Total Energy', color=color)
-ax1.plot(energy_per_run.index, energy_per_run.values, marker='o', color=color, label='Total Energy')
-ax1.tick_params(axis='y', labelcolor=color)
-
+fig, ax1 = plt.subplots(figsize=(x_size, y_size))
+ax1.set_xlabel('Run Counter (reset to 0)')
+ax1.set_ylabel('Total Energy', color='tab:blue')
+ax1.plot(energy_per_run.index - counter_min, energy_per_run.values, marker='o', color='tab:blue', label='Total Energy')
+ax1.tick_params(axis='y', labelcolor='tab:blue')
 ax2 = ax1.twinx()
-color = 'tab:orange'
-ax2.set_ylabel('Number of Drones Used', color=color)
-ax2.plot(drones_used_per_run.index, drones_used_per_run.values, marker='s', color=color, label='Drones Used')
-ax2.tick_params(axis='y', labelcolor=color)
-
+ax2.set_ylabel('Number of Drones Used', color='tab:orange')
+ax2.plot(drones_used_per_run.index - counter_min, drones_used_per_run.values, marker='s', color='tab:orange', label='Drones Used')
+ax2.tick_params(axis='y', labelcolor='tab:orange')
 plt.title('Total Energy vs Number of Drones Used per Run')
 fig.tight_layout()
 plt.grid(True)
 plt.show()
 
-# 5. Plot run counter vs max operation time (left) and number of drones used (right)
+"""
+# 5. Max operation time and number of drones used per run
 max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max()
-fig, ax1 = plt.subplots(figsize=(10, 5))
-color = 'tab:blue'
-ax1.set_xlabel('Run Counter')
-ax1.set_ylabel('Max Operation Time (per Run)', color=color)
-ax1.plot(max_operation_time_per_run.index, max_operation_time_per_run.values, marker='o', color=color, label='Max Operation Time')
-ax1.tick_params(axis='y', labelcolor=color)
-
+fig, ax1 = plt.subplots(figsize=(x_size, y_size))
+ax1.set_xlabel('Run Counter (reset to 0)')
+ax1.set_ylabel('Max Operation Time (per Run)', color='tab:blue')
+ax1.plot(max_operation_time_per_run.index - counter_min, max_operation_time_per_run.values, marker='o', color='tab:blue', label='Max Operation Time')
+ax1.tick_params(axis='y', labelcolor='tab:blue')
 ax2 = ax1.twinx()
-color = 'tab:orange'
-ax2.set_ylabel('Number of Drones Used', color=color)
-ax2.plot(drones_used_per_run.index, drones_used_per_run.values, marker='s', color=color, label='Drones Used')
-ax2.tick_params(axis='y', labelcolor=color)
-
+ax2.set_ylabel('Number of Drones Used', color='tab:orange')
+ax2.plot(drones_used_per_run.index - counter_min, drones_used_per_run.values, marker='s', color='tab:orange', label='Drones Used')
+ax2.tick_params(axis='y', labelcolor='tab:orange')
 plt.title('Max Operation Time and Number of Drones Used per Run')
 fig.tight_layout()
 plt.grid(True)
 plt.show()
+"""
 
-# 6. Plot objective expression per run
+# 6. Objective expression per run
 operation_time_total_per_run = df.groupby('counter')['operation_time_req'].sum()
 objective_expr_per_run = (
     energy_per_run
-    + 10 * drones_used_per_run
-    + 1000 * operation_time_total_per_run
+    + 100 * drones_used_per_run
+    + 100 * operation_time_total_per_run
 )
-plt.figure(figsize=(10, 5))
-plt.plot(objective_expr_per_run.index, objective_expr_per_run.values, marker='D', color='purple')
-plt.xlabel('Run Counter')
+plt.figure(figsize=(x_size, y_size))
+plt.plot(objective_expr_per_run.index - counter_min, objective_expr_per_run.values, marker='D', color='purple')
+plt.xlabel('Run Counter (reset to 0)')
 plt.ylabel('Objective Value')
 plt.title('Objective Expression per Run')
 plt.grid(True)

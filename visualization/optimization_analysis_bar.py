@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 # Load your CSV file
 df = pd.read_csv("../Simulation/log/log_optimization_results.csv")
 
-# Make counter relative (1, 2, 3, ...)
+# Remap counter to consecutive integers starting from 0
 unique_counters = sorted(df['counter'].unique())
-counter_map = {old: new for new, old in enumerate(unique_counters, start=1)}
+counter_map = {old: new for new, old in enumerate(unique_counters, start=0)}
 df['counter'] = df['counter'].map(counter_map)
 
 # Get unique counters (runs)
@@ -21,6 +21,7 @@ plt.xlabel('Run Counter')
 plt.ylabel('Number of Drones Used')
 plt.title('Number of Drones Used per Run')
 plt.grid(True, axis='y')
+plt.xlim(left=0)
 plt.tight_layout()
 plt.show()
 
@@ -45,6 +46,7 @@ for col in numeric_cols:
     plt.title(f'{col.replace("_", " ").title()} per Drone')
     plt.legend()
     plt.grid(True, axis='y')
+    plt.xlim(left=0)
     plt.tight_layout()
     plt.show()
 
@@ -57,5 +59,6 @@ for col in numeric_cols:
     plt.ylabel(f'Total {col.replace("_", " ").title()}')
     plt.title(f'Total {col.replace("_", " ").title()} per Run')
     plt.grid(True, axis='y')
+    plt.xlim(left=0)
     plt.tight_layout()
     plt.show()
