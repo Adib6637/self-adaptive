@@ -133,6 +133,8 @@
 // resolution area covered per pixel
 #define RESOLUTION_AREA_COVERED_PER_PIXEL_Y_MIN 0.01 // Minimum area covered per pixel in m^2
 #define RESOLUTION_AREA_COVERED_PER_PIXEL_Y_MAX 0.05 // Maximum area covered per pixel in m^2
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.00035
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.00024
 
 
 #define COVERED_AREA_X_MAX (CONST_2_TAN_CAMERA_THETA*ALTITUDE_MAX) // Maximum area covered in x direction in m
@@ -147,9 +149,10 @@
 #define OPERATION_TIME_MAX GRB_INFINITY//(COVERED_DISTANCE_MAX / SPEED_MIN) // Maximum operation time in seconds
 #define OPERATION_TIME_MIN 0.0 //Minimum operation time in seconds
 
-#define OPERATION_MAX_PER_CHARGING 1800
+#define OPERATION_MAX_PER_CHARGING 1200
 #define OPERATION_MAX_PER_CHARGING_INV (1.0 / OPERATION_MAX_PER_CHARGING) // Inverse of maximum operation time per charging in seconds
 #define CHARGING_TIME 1200
+#define MAX_CHARGING_CYCLE 3
 
 #define OPTIMIZER_ON true
 #define CONSTRAINT_TUNER_ON false
@@ -157,6 +160,7 @@
 #define MANAGED_SYSTEM_ON true
 #define DYNAMIC_WEATHER false
 
+#define RESI
 
 
 #endif // SIM_PARAM

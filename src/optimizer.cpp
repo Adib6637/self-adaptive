@@ -125,6 +125,8 @@ void Optimizer::optimize() {
     sensor_fps_2(num_drones), 
     sensor_fps_true(num_drones), 
     sensor_pix(num_drones), 
+    sensor_pix_true(num_drones), 
+    sensor_pix_true_inv(num_drones), 
     sensor_pix_2(num_drones), 
     sensor_pix_x(num_drones), 
     sensor_pix_x_inv(num_drones), 
@@ -158,11 +160,13 @@ void Optimizer::optimize() {
     std::vector<GRBLinExpr> sensor_pix_x_value(num_drones);
     std::vector<GRBLinExpr> sensor_pix_y_value(num_drones);
     std::vector<GRBLinExpr> drone_set_pix_value(num_drones);
+    std::vector<GRBLinExpr> drone_set_pix_true_value(num_drones);
     for (int i = 0; i < num_drones; ++i) {
         sensor_pix_selector_total[i] = 0;
         sensor_pix_x_value[i] = 0;
         sensor_pix_y_value[i] = 0;
         drone_set_pix_value[i] = 0;
+        drone_set_pix_true_value[i] = 0;
     }
     // fps selector (SOS1 instead of binaries)
     std::vector<GRBVar> drone_set_fps_selector(num_drones * drone_set_fps.size());
@@ -183,8 +187,8 @@ void Optimizer::optimize() {
         drone_is_used[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "drone_used_" + std::to_string(drone));
         drone_used_total += drone_is_used[drone];
     }
-    //model.addQConstr(drone_used_total <= num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available          case_x_1
-    model.addQConstr(drone_used_total == 2, "drone_used_total_limit"); // limit the number of drones used to the number of drones available                     case_x_2 case_x_3
+    model.addQConstr(drone_used_total <= num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available          case_x_1
+    //model.addQConstr(drone_used_total == 2, "drone_used_total_limit"); // limit the number of drones used to the number of drones available                     case_x_2 case_x_3
 
     for (int drone = 0; drone < num_drones; drone++) {
       // drone basic variables
@@ -199,6 +203,8 @@ void Optimizer::optimize() {
       sensor_fps_2[drone] = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "sensor_fps_2_" + std::to_string(drone));
       sensor_fps_true[drone] = model.addVar(FPS_MIN, FPS_MAX, 0.0, GRB_INTEGER, "sensor_fps_true_" + std::to_string(drone)); // true fps
       sensor_pix[drone] = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "sensor_pix_" + std::to_string(drone));
+      sensor_pix_true[drone] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "sensor_pix_true_" + std::to_string(drone));
+      sensor_pix_true_inv[drone] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "sensor_pix_true_inv_" + std::to_string(drone));
       sensor_pix_2[drone] = model.addVar(0.0, 1.0, 0.0, GRB_CONTINUOUS, "sensor_pix_2_" + std::to_string(drone));
       sensor_pix_x[drone] = model.addVar(PIX_X_MIN, PIX_X_MAX, 0.0, GRB_INTEGER, "sensor_pix_x_" + std::to_string(drone));
       sensor_pix_x_inv[drone] = model.addVar(1/PIX_X_MAX, 1/PIX_X_MIN, 0.0, GRB_CONTINUOUS, "sensor_pix_x_inv_" + std::to_string(drone));
@@ -217,6 +223,7 @@ void Optimizer::optimize() {
       model.addGenConstrPow(sensor_pix[drone], sensor_pix_2[drone], 2.0, "sensor_pix_2_identity_" + std::to_string(drone));
       model.addGenConstrPow(sensor_pix_x[drone], sensor_pix_x_inv[drone], -1.0, "sensor_pix_x_inv_identity_" + std::to_string(drone));
       model.addGenConstrPow(sensor_pix_y[drone], sensor_pix_y_inv[drone], -1.0, "sensor_pix_y_inv_identity_" + std::to_string(drone));
+      model.addGenConstrPow(sensor_pix_true[drone], sensor_pix_true_inv[drone], -1.0, "sensor_pix_y_inv_identity_" + std::to_string(drone));
 
       // pixel x and y selector 
       for (int i = 0; i < drone_set_pix.size(); i++) {
@@ -226,11 +233,13 @@ void Optimizer::optimize() {
           sensor_pix_x_value[drone] += drone_set_pix_x[i] * sensor_pix_selector[drone * drone_set_pix.size() + i];
           sensor_pix_y_value[drone] += drone_set_pix_y[i] * sensor_pix_selector[drone * drone_set_pix.size() + i];
           drone_set_pix_value[drone] += drone_set_pix_normalized[i] * sensor_pix_selector[drone * drone_set_pix.size() + i];
+          drone_set_pix_true_value[drone] += drone_set_pix[i] * sensor_pix_selector[drone * drone_set_pix.size() + i];
       }
       model.addQConstr(sensor_pix_selector_total[drone] == 1, "sensor_pix_xy_selector_total_1_" + std::to_string(drone));
       model.addQConstr(sensor_pix_x[drone] == sensor_pix_x_value[drone], "sensor_pix_x_value_restriction_" + std::to_string(drone));
       model.addQConstr(sensor_pix_y[drone] == sensor_pix_y_value[drone], "sensor_pix_y_value_restriction_" + std::to_string(drone));
       model.addQConstr(sensor_pix[drone] == drone_set_pix_value[drone], "drone_pix_value_restriction_" + std::to_string(drone));
+      model.addQConstr(sensor_pix_true[drone] == drone_set_pix_true_value[drone], "drone_pix_true_value_restriction_" + std::to_string(drone));
       // fps selector (SOS1)
       for (int i = 0; i < drone_set_fps.size();i++) {
           //int i = feasible_fps_indices[idx];
@@ -256,9 +265,13 @@ void Optimizer::optimize() {
       number_of_place_covered[drone] = model.addVar(0.0, NUMBER_PLACE_COVERED_MAX, 0.0, GRB_SEMICONT, "number_of_place_covered_" + std::to_string(drone)); // number of place covered by the drone
       covered_distance[drone] = model.addVar(COVERED_DISTANCE_MIN, COVERED_DISTANCE_MAX, 0.0, GRB_SEMICONT, "covered_distance_" + std::to_string(drone)); // distance covered by the drone
       operation_time[drone] = model.addVar(OPERATION_TIME_MIN, OPERATION_TIME_MAX, 0.0, GRB_SEMICONT, "operation_time_" + std::to_string(drone)); // operation time of the drone   
-      
       model.addQConstr(number_of_place_covered[drone] == covered_area_total[drone] * covered_area_total_t0_inv[drone], "number_of_place_covered_identity_" + std::to_string(drone)); // number of place covered by the drone is equal to total area covered by the drone multiplied by inverse of total area covered by the drone
-  //    model.addQConstr(covered_area_y_t0[drone] * sensor_pix_y_inv[drone] <= 0.01, "resolution__identity_" + std::to_string(drone)); // area covered in y direction multiplied by inverse of area covered in y direction is less than or equal to 0.01>
+      
+      // resolution
+      model.addQConstr(covered_area_total_t0[drone] * sensor_pix_true_inv[drone] <= RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX, "resolution_MAX_identity_" + std::to_string(drone)); // area covered in y direction multiplied by inverse of area covered in y direction is less than or equal to 0.01>
+      model.addQConstr(covered_area_total_t0[drone] * sensor_pix_true_inv[drone] >= RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN, "resolution_MIN_identity_" + std::to_string(drone)); 
+      
+      
       //model.addQConstr(covered_area_x_t0[drone] == CONST_2_TAN_CAMERA_THETA * drone_h_true[drone], "covered_area_x_t0_identity_" + std::to_string(drone)); // area covered in x direction is equal to 2 * tan(camera_theta) * (drone_h * altitude_max + altitude_min)
       model.addQConstr(covered_area_x_t0[drone] == CONST_2_TAN_CAMERA_THETA * ((drone_h[drone] * ( ALTITUDE_MAX - ALTITUDE_MIN )) + ALTITUDE_MIN), "covered_area_x_t0_identity_" + std::to_string(drone)); // area covered in x direction is equal to 2 * tan(camera_theta) * (drone_h * altitude_max + altitude_min)
       model.addQConstr(covered_distance[drone] == (covered_area_x_t0[drone] * number_of_place_covered[drone]) - covered_area_x_t0[drone], "covered_distance_identity_" + std::to_string(drone)); // distance covered by the drone is equal to distance between place covered by the drone multiplied by number of place covered by the drone minus distance between place covered by the drone
@@ -280,17 +293,13 @@ void Optimizer::optimize() {
       ps_exprs[drone] += ps_b*sensor_pix[drone];
       ps_exprs[drone] += ps_c;
       
-      //*sensor_fps_pix[drone];
-      //ps_exprs[drone] += ps_d*sensor_fps_2[drone];
-      //ps_exprs[drone] += ps_e*sensor_pix_2[drone];
-      //model.addQConstr(ps_exprs[drone] >= 0.0, "sensor_power_positive_" + std::to_string(drone)); // sensor power must be positive
 
       // power true
-      drone_pa_consumption[drone] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_SEMICONT, "drone_pa_consumption_" + std::to_string(drone)); // actuator power consumption for each drone
-      drone_ps_consumption[drone] = model.addVar(0.0, 10.0, 0.0, GRB_SEMICONT, "drone_ps_consumption_" + std::to_string(drone)); // sensor power consumption for each drone
-      drone_energy_consumption[drone] = model.addVar(0.0, num_drones*(POWER_ACTUATOR_MAX + 200)*OPERATION_TIME_MAX , 0.0, GRB_SEMICONT, "drone_energy_consumption_" + std::to_string(drone)); // energy consumption for each drone
-      model.addQConstr(drone_pa_consumption[drone] == (pa_exprs[drone] * POWER_ACTUATOR_MAX) + POWER_ACTUATOR_MIN, "drone_pa_consumption_identity_" + std::to_string(drone)); // actuator power consumption is equal to the actuator power expression multiplied by the maximum actuator power plus the minimum actuator power
-      model.addQConstr(drone_ps_consumption[drone] == (ps_exprs[drone] * POWER_SENSOR_MAX) + POWER_SENSOR_MIN, "drone_ps_consumption_identity_" + std::to_string(drone)); // sensor power consumption is equal to the sensor power expression multiplied by the maximum sensor power plus the minimum sensor power
+      drone_pa_consumption[drone] = model.addVar(0.0, POWER_ACTUATOR_MAX*2, 0.0, GRB_SEMICONT, "drone_pa_consumption_" + std::to_string(drone)); // actuator power consumption for each drone
+      drone_ps_consumption[drone] = model.addVar(0.0, POWER_SENSOR_MAX*2, 0.0, GRB_SEMICONT, "drone_ps_consumption_" + std::to_string(drone)); // sensor power consumption for each drone
+      drone_energy_consumption[drone] = model.addVar(0.0, GRB_INFINITY , 0.0, GRB_SEMICONT, "drone_energy_consumption_" + std::to_string(drone)); // energy consumption for each drone
+      model.addQConstr(drone_pa_consumption[drone] == (pa_exprs[drone] * (POWER_ACTUATOR_MAX-POWER_ACTUATOR_MIN)) + POWER_ACTUATOR_MIN, "drone_pa_consumption_identity_" + std::to_string(drone)); // actuator power consumption is equal to the actuator power expression multiplied by the maximum actuator power plus the minimum actuator power
+      model.addQConstr(drone_ps_consumption[drone] == (ps_exprs[drone] * (POWER_SENSOR_MAX-POWER_SENSOR_MIN)) + POWER_SENSOR_MIN, "drone_ps_consumption_identity_" + std::to_string(drone)); // sensor power consumption is equal to the sensor power expression multiplied by the maximum sensor power plus the minimum sensor power
       model.addQConstr(drone_energy_consumption[drone] == operation_time[drone] * (drone_pa_consumption[drone] + drone_ps_consumption[drone]), "drone_energy_consumption_identity_" + std::to_string(drone)); // energy consumption is equal to power multiplied by operation time
       //model.addQConstr(drone_energy_consumption[drone] == operation_time[drone] * drone_pa_consumption[drone], "drone_energy_consumption_identity_" + std::to_string(drone)); // energy consumption is equal to power multiplied by operation time
       
@@ -302,10 +311,12 @@ void Optimizer::optimize() {
       //model.addGenConstrIndicator(drone_is_used[drone], 0, covered_area_true[drone] <= 1.0 , "addGenConstrIndicator_drone_is_used");
 
       // number of charging cycles is operation time divided by maximum operation time
-      charging_cycles[drone] = model.addVar(0.0, 20, 0.0, GRB_SEMIINT, "charging_cycles_" + std::to_string(drone)); // number of charging cycles for each drone
-      model.addQConstr(charging_cycles[drone] == (operation_time[drone] - OPERATION_MAX_PER_CHARGING)*OPERATION_MAX_PER_CHARGING_INV, "charging_cycles_identity_" + std::to_string(drone)); // number of charging cycles is equal to operation time divided by maximum operation time
-      operation_time_req[drone] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_SEMICONT, "operation_time_req_" + std::to_string(drone)); // total operation time including charging time
-      model.addQConstr(operation_time_req[drone] == operation_time[drone] + ((drone_is_used[drone] * CHARGING_TIME))*charging_cycles[drone], "operation_time_req_identity_" + std::to_string(drone)); // total operation time including charging time is equal to operation time plus charging time if the drone is used
+      charging_cycles[drone] = model.addVar(1.0, MAX_CHARGING_CYCLE, 0.0, GRB_CONTINUOUS, "charging_cycles_" + std::to_string(drone)); // number of charging cycles for each drone
+      
+      model.addQConstr(charging_cycles[drone] == (operation_time[drone])*OPERATION_MAX_PER_CHARGING_INV, "charging_cycles_identity_" + std::to_string(drone)); // number of charging cycles is equal to operation time divided by maximum operation time
+      
+      operation_time_req[drone] = model.addVar(0.0, OPERATION_MAX_PER_CHARGING*MAX_CHARGING_CYCLE, 0.0, GRB_SEMICONT, "operation_time_req_" + std::to_string(drone)); // total operation time including charging time
+      model.addQConstr(operation_time_req[drone] == operation_time[drone]*drone_is_used[drone] + ((drone_is_used[drone] * CHARGING_TIME))*(charging_cycles[drone]-1), "operation_time_req_identity_" + std::to_string(drone)); // total operation time including charging time is equal to operation time plus charging time if the drone is used
       
     }
     // sum of covered_area_total = FIELD_AREA
@@ -318,28 +329,19 @@ void Optimizer::optimize() {
     // oeration time
     // operation_time_total should be the maximum operation_time_req among all drones
     GRBVar operation_time_total = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, "operation_time_total");
-    model.addGenConstrMax(operation_time_total, operation_time_req.data(), num_drones, -GRB_INFINITY ,"operation_time_total_max");
+    //model.addGenConstrMax(operation_time_total, operation_time_req.data(), num_drones, -GRB_INFINITY ,"operation_time_total_max");
+    model.addGenConstrMax(operation_time_total, operation_time.data(), num_drones, -GRB_INFINITY ,"operation_time_total_max");
 
-    
-    // sum of sensor power expressions
-    //GRBQuadExpr power_sensor_total = GRBQuadExpr();
-    //GRBQuadExpr power_actuator_total = GRBQuadExpr();
-    //GRBQuadExpr total_power = GRBQuadExpr();
-    //for (int drone = 0; drone < num_drones; drone++) {  
-    //  power_actuator_total += 1*ps_exprs[drone];
-    //  power_sensor_total += pa_exprs[drone];
-    //  total_power += 1*drone_pa_consumption[drone] + 1*drone_ps_consumption[drone];
-    //}
  
     // sum of energy expressions as objective
     GRBQuadExpr total_energy_consumed = GRBQuadExpr();
     for (int drone = 0; drone < num_drones; drone++) {
-      total_energy_consumed += drone_energy_consumption[drone];
+      total_energy_consumed += drone_energy_consumption[drone]*drone_is_used[drone]; // energy consumption is only considered if the drone is used
     }
     GRBQuadExpr objective_expr = GRBQuadExpr();
     objective_expr = 1*total_energy_consumed + 
-                     100*drone_used_total + 
-                     100*operation_time_total;
+                     1*drone_used_total + 
+                     100000000*operation_time_total;
 
 
   //####################################################################################  optimization  ##################################################################################
@@ -350,7 +352,7 @@ void Optimizer::optimize() {
     //model.set(GRB_DoubleParam_TimeLimit, 60); // 60 seconds time limit
     //model.set(GRB_IntParam_Threads, 4); // Use 4 threads
     //model.set(GRB_IntParam_Presolve, 2); // Aggressive presolve
-    //model.set(GRB_DoubleParam_Heuristics, 0.9); // Increase heuristic effort
+    //model.set(GRB_DoubleParam_Heuristics, 1.0); // Increase heuristic effort
     
 
     //warm start
@@ -475,6 +477,9 @@ void Optimizer::optimize() {
     std::cout << "Total covered area: " << total_covered_area << std::endl;
     std::cout << "Optimization was successful." << std::endl;
     std::cout << "Success: " << success << std::endl;
+    std::cout << "pa_C_0: " << pa_C_0 << " ,pa_C_1: " << pa_C_1 << " ,pa_C_2: " << pa_C_2 << " ,pa_C_3: " << pa_C_3 << " ,pa_C_4: " << pa_C_4 << std::endl;
+    std::cout << "ps_a: " << ps_a << " ,ps_b: " << ps_b << " ,ps_c: " << ps_c << std::endl;
+    std::cout << "Total operation time: " << operation_time_total.get(GRB_DoubleAttr_X) << std::endl;
     } else {
       //return; ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       std::cout << "Optimization was not successful." << std::endl;
