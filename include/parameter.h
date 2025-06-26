@@ -112,7 +112,7 @@
 #define GRAVITY 9.81 // Gravity constant in m/s^2
 #define H_REF 100.0 // Reference height in meters
 
-#define NUMBER_DRONE 5 // Number of drones
+#define NUMBER_DRONE_MAX 5 // Number of drones
 #define FIELD_AREA 1000000.0 // Field area in m^2
 #define FIELD_AREA_INV (1.0 / FIELD_AREA) // Inverse of field area
 
@@ -128,11 +128,9 @@
 #define DRONE_SET_PIX {307200,1433600 , 2240000}
 #define DRONE_SET_PIX_X {640,1280 ,1600 }
 #define DRONE_SET_PIX_Y {480,1120 ,1400 }
-#define DRONE_SET_FPS {30, 60, 90} 
+#define DRONE_SET_FPS {30}//, 60, 90} 
 
 // resolution area covered per pixel
-#define RESOLUTION_AREA_COVERED_PER_PIXEL_Y_MIN 0.01 // Minimum area covered per pixel in m^2
-#define RESOLUTION_AREA_COVERED_PER_PIXEL_Y_MAX 0.05 // Maximum area covered per pixel in m^2
 #define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.00035
 #define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.00024
 
@@ -147,12 +145,12 @@
 #define COVERED_DISTANCE_MAX (COVERED_AREA_X_MAX*NUMBER_PLACE_COVERED_MAX - COVERED_AREA_X_MAX)
 #define COVERED_DISTANCE_MIN COVERED_AREA_X_MIN
 #define OPERATION_TIME_MAX GRB_INFINITY//(COVERED_DISTANCE_MAX / SPEED_MIN) // Maximum operation time in seconds
-#define OPERATION_TIME_MIN 0.0 //Minimum operation time in seconds
+#define OPERATION_TIME_MIN 0 //Minimum operation time in seconds
 
-#define OPERATION_MAX_PER_CHARGING 1200
+#define OPERATION_MAX_PER_CHARGING 1800
 #define OPERATION_MAX_PER_CHARGING_INV (1.0 / OPERATION_MAX_PER_CHARGING) // Inverse of maximum operation time per charging in seconds
 #define CHARGING_TIME 1200
-#define MAX_CHARGING_CYCLE 3
+#define MAX_CHARGING_CYCLE 5
 
 #define OPTIMIZER_ON true
 #define CONSTRAINT_TUNER_ON false
