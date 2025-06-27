@@ -13,7 +13,7 @@
 #define DYNAMIC_WEATHER         false
 #define SUCCESS_LIMIT           45
 //#define FIX_MODEL_PARAMETER     
-#define OUTPUT_FLAG             1 // 0: no output, 1: output to console, 2: output to file
+#define OUTPUT_FLAG             0 // 0: no output, 1: output to console, 2: output to file
 
 // optimization objective
 #define OBJECTIVE_ENERGY_WEIGHT 1.0

@@ -16,7 +16,8 @@ NUMERIC_COLS = [
     'power', 'energy', 'charging_cycles',
     'operation_time_req'
 ]
-COUNTER_RANGE = (24, 43)
+COUNTER_RANGE = (0, 45)
+interval = 3
 
 x_size = 5
 y_size = 5
@@ -42,7 +43,7 @@ counter_map = {old: new for new, old in enumerate(unique_counters, start=1)}
 df['counter'] = df['counter'].map(counter_map)
 df = df[df['counter'].between(*COUNTER_RANGE)]
 # Only keep counters 1, 4, 7, 10, ...
-df = df[(df['counter'] - 1) % 4 == 0]
+df = df[(df['counter'] - 1) % interval == 0]
 counters = sorted(df['counter'].unique())
 num_drones = df['drone'].nunique()
 counter_min = df['counter'].min()

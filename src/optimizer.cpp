@@ -8,6 +8,30 @@
 #include <fstream>
 
 int success = 0;
+class print_callback: public GRBCallback
+{
+  public:
+    std::ofstream* logfile;
+    double runtime = 0.0;
+    print_callback(std::ofstream* xlogfile) {
+      logfile = xlogfile;
+    }
+  protected:
+    void callback () {
+      try {
+        if (where == GRB_CB_MIPSOL){
+            runtime = getDoubleInfo(GRB_CB_RUNTIME);
+            //std::cout << "Callback called at runtime: " << runtime << std::endl;
+            *logfile << runtime << "\n";
+        }
+      } catch (GRBException e) {
+        std::cout << "Error number: " << e.getErrorCode() << std::endl;
+        std::cout << e.getMessage() << std::endl;
+      } catch (...) {
+        std::cout << "Error during callback" << std::endl;
+      }
+    }
+};
 
 void Optimizer::optimize() { 
   if (!OPTIMIZER_ON)return;
@@ -366,7 +390,19 @@ void Optimizer::optimize() {
     //model.set(GRB_IntParam_MIPFocus, 1); //Focus on finding feasible solutions
     //model.set(GRB_IntParam_RINS, 10); //Enable RINS heuristic with a frequency of 10 nodes
 
+    // print info
+    // Create a callback object and associate it with the model
+    // Open log file
+    std::ofstream logfile("../log/log_runtime_tmp.log", std::ios::app);
+    if (!logfile.is_open()) {
+      std::cout << "Cannot open log_runtime_tmp.log for callback message" << std::endl;
+      return;
+    }
+    print_callback cb_ = print_callback(&logfile);
+    model.setCallback(&cb_);
+
     model.optimize();
+    logfile.close();
   //####################################################################################  handle result ##################################################################################
 
 
@@ -378,6 +414,22 @@ void Optimizer::optimize() {
       double total_pa = 0.0, total_ps = 0.0, total_power = 0.0, total_energy = 0.0, total_covered_area = 0.0;
 
       // --- CSV output block ---
+      // Read the last runtime value from log_runtime_tmp.log
+      double last_runtime = -1.0;
+      {
+        std::ifstream runtime_log("../log/log_runtime_tmp.log");
+        std::string line;
+        while (std::getline(runtime_log, line)) {
+          if (!line.empty()) {
+        try {
+          last_runtime = std::stod(line);
+        } catch (...) {
+          // Ignore conversion errors
+        }
+          }
+        }
+      }
+      // Now last_runtime contains the last value from the log file (or -1.0 if not found)
       std::ofstream csv("../log/log_optimization_results.csv", std::ios::app);
       if (csv.tellp() == 0) {
         csv << "counter,drone,used,v,v_true,h,fps,pix,pix_x,pix_y,covered_area_x_t0,covered_area_y_t0,covered_area_total_t0,covered_area_total,covered_area_true,number_of_place_covered,covered_distance,operation_time,pa_consumption,ps_consumption,power,energy,charging_cycles,operation_time_req\n";
@@ -459,9 +511,20 @@ void Optimizer::optimize() {
     std::cout << "Total covered area: " << total_covered_area << std::endl;
     std::cout << "Optimization was successful." << std::endl;
     std::cout << "Success: " << success << std::endl;
+    //std::cout << "Model runtime: " << model.get(GRB_DoubleAttr_Runtime) << std::endl;
+    std::cout << "Model runtime: " << last_runtime << std::endl;
     //std::cout << "pa_C_0: " << pa_C_0 << " ,pa_C_1: " << pa_C_1 << " ,pa_C_2: " << pa_C_2 << " ,pa_C_3: " << pa_C_3 << " ,pa_C_4: " << pa_C_4 << std::endl;
     //std::cout << "ps_a: " << ps_a << " ,ps_b: " << ps_b << " ,ps_c: " << ps_c << std::endl;
     std::cout << "Total operation time: " << operation_time_total.get(GRB_DoubleAttr_X) << std::endl;
+
+    // Store last_runtime in a CSV file
+    std::ofstream runtime_csv("../log/log_runtime_results.csv", std::ios::app);
+    if (runtime_csv.tellp() == 0) {
+      runtime_csv << "counter,last_runtime\n";
+    }
+    runtime_csv << counter << "," << last_runtime << "\n";
+    runtime_csv.close();
+
     } else {
       //return; ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       std::cout << "Optimization was not successful." << std::endl;
@@ -494,3 +557,4 @@ void Optimizer::optimize() {
 //sc_out<double> power_consumption[10];
 //sc_out<double> operation_time[10];
 //sc_core::sc_vector<sc_in<double>> observed_data; //drone mass, payload mass, altitute, wind speed, wind angle, speed of drone,power actuator, umber of pixel, fps, power sensor
+

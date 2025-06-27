@@ -3,4 +3,5 @@
 build/
 trash/
 run.sh
+CMakeFiles/
 
