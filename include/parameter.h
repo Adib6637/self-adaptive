@@ -1,19 +1,170 @@
 #ifndef SIM_PARAM 
 #define SIM_PARAM
 
-// simulation time
-#define SIMULATION_CLK_TICK_NS  10
-#define SIMULATION_DURATION_NS  100000 //2200
+///////////////////////////////////////////////////////////////////////////////////// case dependent //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// simulation component
+#define SIMULATION_CASE 1
+#define SIMULATION_SUB_CASE 1
+
+#define AREA_DEFAULT            30000.0 
+#define LIMIT_AREA_TEST         50000                       // only for case 5  {640,1280 ,1600 }
+#define DRONE_SET_PIX_TEST      {307200,1433600, 2240000}   // only for case 6  {640,1280 ,1600 }
+#define DRONE_SET_PIX_X_TEST    {640,1280 ,1600 }           // only for case 6  {640,1280 ,1600 }
+#define DRONE_SET_PIX_Y_TEST    {480,1120 ,1400 }           // only for case 6  {480,1120 ,1400 } 
+#define DRONE_SET_FPS_TEST      {30, 60, 90}                // only for case 6  {30, 60, 90}  
+
+#define OPTIMIZER_GAP 0.0
+
+
+#define SIMULATION_DURATION_NS  2200
 #define OPTIMIZER_ON            true
-#define CONSTRAINT_TUNER_ON     false
 #define MODEL_LEARNER_ON        true
 #define MANAGED_SYSTEM_ON       true
 #define DYNAMIC_WEATHER         false
+
+
+#if SIMULATION_CASE == 1    // dynamic model, static weather
+    #define DYNAMIC_WEATHER         false
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        true
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              AREA_DEFAULT
+    #define DRONE_SET_PIX           {307200,1433600, 2240000}
+    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
+    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
+    #define DRONE_SET_FPS           {30, 60, 90} 
+#elif SIMULATION_CASE == 2  // static model, dynamic weather
+    #define DYNAMIC_WEATHER         true
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        false
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              AREA_DEFAULT
+    #define DRONE_SET_PIX           {307200,1433600, 2240000}
+    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
+    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
+    #define DRONE_SET_FPS           {30, 60, 90} 
+#elif SIMULATION_CASE == 3  // dynamic model, dynamic weather
+    #define DYNAMIC_WEATHER         true
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        true
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              AREA_DEFAULT
+    #define DRONE_SET_PIX           {307200,1433600, 2240000}
+    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
+    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
+    #define DRONE_SET_FPS           {30, 60, 90} 
+#elif SIMULATION_CASE == 4  // static model, static weather
+    #define DYNAMIC_WEATHER         true
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        true
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              AREA_DEFAULT
+    #define DRONE_SET_PIX           {307200,1433600, 2240000}
+    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
+    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
+    #define DRONE_SET_FPS           {30, 60, 90} 
+#elif SIMULATION_CASE == 5  // static model, static weather , limit
+    #define DYNAMIC_WEATHER         false
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        false
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              LIMIT_AREA_TEST
+    #define DRONE_SET_PIX           {307200,1433600, 2240000}
+    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
+    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
+    #define DRONE_SET_FPS           {30, 60, 90} 
+#elif SIMULATION_CASE == 6  // static model, static weather
+    #define DYNAMIC_WEATHER         false
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        false
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              AREA_DEFAULT
+    #define DRONE_SET_PIX           DRONE_SET_PIX_TEST
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_TEST
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_TEST
+    #define DRONE_SET_FPS           DRONE_SET_FPS_TEST
+
+
+
+#else
+    #define DYNAMIC_WEATHER         false
+    #define MANAGED_SYSTEM_ON       false
+    #define MODEL_LEARNER_ON        false
+    #define OPTIMIZER_ON            false
+    #define FIELD_AREA              0.0
+#endif
+
+
+
+#if SIMULATION_SUB_CASE == 1
+    #define NUMBER_DRONE_MAX        5
+    #define DYNAMIC_DRONE           true
+#elif SIMULATION_SUB_CASE == 2
+    #define NUMBER_DRONE_MAX        2
+    #define DYNAMIC_DRONE           false
+#elif SIMULATION_SUB_CASE == 3
+    #define NUMBER_DRONE_MAX        1
+    #define DYNAMIC_DRONE           false
+#else
+    #define NUMBER_DRONE_MAX        5
+    #define DYNAMIC_DRONE           true
+#endif        
+
+
+
+
+
+#define OPTIMIZE_INTERVAL                   4      // Interval for optimization in number of model parameter updates  (FIX_MODEL_PARAMETER is not defined)
+#define OPTIMIZE_WEATHER_CHANGE_INTERVAL    4      // Interval for optimization in number of weather changes (FIX_MODEL_PARAMETER is defined AND DYNAMIC_WEATHER is true)
+
+
+#define LEARNING_PROGRESS_LOG   
+#define LEARNING_TIMING_LOG
+#define OPTIMIZATION_TIMING_LOG
+#define OPTIMIZATION_RESULT_LOG 
+#define PRINT_OPTIMIZATION_RESULTS
+//#define PRINT_GUROBI_OUTPUT_FLAG
+#define WEATHER_FORECAST_LOG
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// simulation time
+#define SIMULATION_CLK_TICK_NS  10
+//#define SIMULATION_DURATION_NS  10000 //2200
+
+// simulation component
+//#define OPTIMIZER_ON            true
+//#define MODEL_LEARNER_ON        true
+//#define MANAGED_SYSTEM_ON       true
+//#define DYNAMIC_WEATHER         false
+#define CONSTRAINT_TUNER_ON     false
 #define SUCCESS_LIMIT           45
-//#define FIX_MODEL_PARAMETER     
-#define OUTPUT_FLAG             0 // 0: no output, 1: output to console, 2: output to file
+#if !MODEL_LEARNER_ON
+#define FIX_MODEL_PARAMETER
+#endif
+//#define OPTIMIZE_INTERVAL                   4      // Interval for optimization in number of model parameter updates  (FIX_MODEL_PARAMETER is not defined)
+//#define OPTIMIZE_WEATHER_CHANGE_INTERVAL    4      // Interval for optimization in number of weather changes (FIX_MODEL_PARAMETER is defined AND DYNAMIC_WEATHER is true)
+
+// simulation environment 
+//#define NUMBER_DRONE_MAX        5               // Number of drones
+//#define FIELD_AREA              30000.0       // Field area in m^2  https://sugarindustry.info/paper/15166/
+//#define FIELD_AREA_INV          (1.0 / FIELD_AREA) // Inverse of field area
+#define GRAVITY                 9.81            // Gravity constant in m/s^2
+#define H_REF                   100.0           // Reference height in meters
+
+// logging (define to enable) 
+//#define LEARNING_PROGRESS_LOG   
+//#define LEARNING_TIMING_LOG
+//#define OPTIMIZATION_TIMING_LOG
+//#define OPTIMIZATION_RESULT_LOG 
+//#define PRINT_OPTIMIZATION_RESULTS
+//#define PRINT_GUROBI_OUTPUT_FLAG
+//#define WEATHER_FORECAST_LOG
+
+
 
 // optimization objective
 #define OBJECTIVE_ENERGY_WEIGHT 1.0
@@ -21,7 +172,16 @@
 #define OBJECTIVE_TIME_WEIGHT   1000.0
 
 // optimization parameters
-#define OPTIMALITY_GAP          0.01
+#define SET_GUROBI_SOLVER_PARAMS(model)                \
+    model.set(GRB_DoubleParam_MIPGap, OPTIMIZER_GAP);           \
+    /*model.set(GRB_DoubleParam_TimeLimit, 60);*/      \
+    /*model.set(GRB_IntParam_Threads, 8);*/            \
+    /*model.set(GRB_IntParam_Presolve, 2);*/           \
+    /*model.set(GRB_IntParam_Cuts, 2);*/               \
+    /*model.set(GRB_IntParam_CutPasses, 20);*/         \
+    /*model.set(GRB_DoubleParam_Heuristics, 1.0);*/    \
+    /*model.set(GRB_IntParam_MIPFocus, 1);*/           \
+    /*model.set(GRB_IntParam_RINS, 10);*/              \
 
 
 // power actuator dataset
@@ -137,13 +297,6 @@
 #define CONST_8_TAN_3_THETA_CAMERA      (CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA) // 8 * tan^3 camera theta
 #define CONST_8_TAN_3_THETA_CAMERA_INV  (1.0 / CONST_8_TAN_3_THETA_CAMERA)// Inverse of 8 * tan^3 camera theta
 
-// simulation environment 
-#define NUMBER_DRONE_MAX    5               // Number of drones
-#define FIELD_AREA          100000.0       // Field area in m^2  https://sugarindustry.info/paper/15166/
-#define FIELD_AREA_INV      (1.0 / FIELD_AREA) // Inverse of field area
-#define GRAVITY             9.81            // Gravity constant in m/s^2
-#define H_REF               100.0           // Reference height in meters
-
 // resolution 
 #define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.000004
 #define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.000002   //sample : (5cmx5cm)/(32x32)
@@ -152,10 +305,10 @@
 #define DRONE_MASS          3.680       // Drone mass in kg
 #define MASS_MAX            10.0        // Maximum mass
 #define MASS_MIN            0.0         // Minimum mass
-#define DRONE_SET_PIX       {307200,1433600}// , 2240000}
-#define DRONE_SET_PIX_X     {640,1280 ,1600 }
-#define DRONE_SET_PIX_Y     {480,1120 ,1400 }
-#define DRONE_SET_FPS       {30, 60, 90} 
+//#define DRONE_SET_PIX       {307200,1433600, 2240000}
+//#define DRONE_SET_PIX_X     {640,1280 ,1600 }
+//#define DRONE_SET_PIX_Y     {480,1120 ,1400 }
+//#define DRONE_SET_FPS       {30, 60, 90} 
 
 #define COVERED_AREA_X_MAX      (CONST_2_TAN_CAMERA_THETA*ALTITUDE_MAX)     // Maximum area covered in x direction in m
 #define COVERED_AREA_X_MIN      1e-8                                        //(CONST_2_TAN_CAMERA_THETA*ALTITUDE_MIN) // Minimum area covered in x direction in m

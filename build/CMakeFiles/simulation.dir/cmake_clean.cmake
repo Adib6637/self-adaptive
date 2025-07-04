@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/simulation.dir/simulation.cpp.o"
   "CMakeFiles/simulation.dir/simulation.cpp.o.d"
+  "CMakeFiles/simulation.dir/src/callback.cpp.o"
+  "CMakeFiles/simulation.dir/src/callback.cpp.o.d"
   "CMakeFiles/simulation.dir/src/constraint_tuner.cpp.o"
   "CMakeFiles/simulation.dir/src/constraint_tuner.cpp.o.d"
   "CMakeFiles/simulation.dir/src/managed_system.cpp.o"

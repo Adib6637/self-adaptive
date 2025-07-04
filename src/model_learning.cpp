@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <ctime>
+#include <chrono>
 
 void log_loss_to_csv(double maneuver_loss, double sensor_loss, double data_number);
 void log_coefficient_actuator( double eta, double delta, double alpha, double beta, double data_number);
@@ -16,36 +17,11 @@ std::string model_coefficient_data_file = "../dataset/model_parameter_set/model_
 
 
 void Model_Learning::learning() {
-    if (!MODEL_LEARNER_ON) {
-        return; 
-    }
-    //std::cout << "Model Learning: learning method called. counter: "<< counter << std::endl;
-    // start when the data stream is ready
-    if(observed_data[19].read() == 0){
-        return;
-    }
-    // ensure progress - syncronization
-    if (counter == observed_data[19].read()) {
-        return; 
-    }else { 
-        counter = observed_data[19].read();
-    }
-    
+    if (!MODEL_LEARNER_ON || observed_data[19].read() == 0 || counter == observed_data[19].read()) return; 
+    counter = observed_data[19].read();
     
     if (!MANAGED_SYSTEM_ON) {
         simulate_coefficient_data();
-        /*
-        //std::cout << "Model Learning: Simulating coefficient data. counter: "<< counter << std::endl;
-        for (int i = 0; i < 4; ++i) {
-            //std::cout << " coeff_actuator[" << i << "]: " << coeff_actuator(i);
-            std::cout << coeff_actuator(i);
-        }
-        for (int i = 4; i < 10; ++i) {
-            //std::cout << " coeff_sensor[" << i-4 << "]: " << coeff_sensor(i-4);
-            std::cout << coeff_sensor(i-4);
-        }
-        std::cout << std::endl;
-        */
         return;
     }
 
@@ -79,6 +55,10 @@ void Model_Learning::learning() {
     d(7) = speed_normalized; // v_i
     double power_actuator_measured = power_actuator_normalized; // Ground truth power consumption
 
+#ifdef LEARNING_TIMING_LOG
+    auto learning_start = std::chrono::steady_clock::now();
+#endif
+
     Eigen::Vector4d grad;
     for (int i = 0; i < 4; ++i) {
         Eigen::Vector4d x_plus = coeff_actuator;
@@ -94,23 +74,13 @@ void Model_Learning::learning() {
     double power_actuator_pred = predict_actuator_power(coeff_actuator, d, observed_data[19].read());
     double loss_actuator = 0.5 * std::pow(power_actuator_pred - power_actuator_measured, 2);
 
-    // Skip update if unstable
-    if (std::isnan(loss_actuator)) {
-        ;
-    }else{
-        Eigen::Vector4d update = lr_actuator * (power_actuator_pred - power_actuator_measured) * grad;
-        lr_actuator *= decay_actuator;
-        for (int i = 0; i < 4; ++i) {
-            //std::cout << "grad: " << grad(i) << ", update: " << update(i) << std::endl;
-            coeff_actuator(i) -= update(i);
-        } 
-        for (int i = 0; i < 4; ++i){
-            model_parameter[i].write(coeff_actuator(i));
-        }
-        if (loss_actuator < 100 && loss_actuator > -100) {
-           log_coefficient_actuator(coeff_actuator(0), coeff_actuator(1), coeff_actuator(2), coeff_actuator(3), observed_data[19].read());
-        }
-    }
+    if (std::isnan(loss_actuator)) return;
+
+    Eigen::Vector4d update = lr_actuator * (power_actuator_pred - power_actuator_measured) * grad;
+    lr_actuator *= decay_actuator;
+    for (int i = 0; i < 4; ++i) {
+        coeff_actuator(i) -= update(i);
+    } 
 
     // ############################################################################# Sensor Power Model Update #############################################################################
     Eigen::VectorXd d_s(2);
@@ -134,24 +104,40 @@ void Model_Learning::learning() {
     double power_sensor_pred = predict_sensor_power(coeff_sensor, d, observed_data[19].read());
     double loss_sensor = 0.5 * std::pow(power_sensor_pred - power_sensor_measured, 2);
 
-    // Skip update if unstable
-    if (std::isnan(loss_sensor)) {
-        ;
-    }else{
-        Eigen::VectorXd update_sensor_coefficient(6);
+
+    if (std::isnan(loss_sensor)) return;
+    Eigen::VectorXd update_sensor_coefficient(6);
+    update_sensor_coefficient = lr_sensor * (power_sensor_pred - power_sensor_measured) * grad_sensor;
     lr_sensor*=decay_sensor;
-        update_sensor_coefficient = lr_sensor * (power_sensor_pred - power_sensor_measured) * grad_sensor;
-        for (int i = 0; i < 6; ++i) {
-            coeff_sensor(i) -= update_sensor_coefficient(i);
-        }
-        for (int i = 4; i < 10; ++i){
-            model_parameter[i].write(coeff_sensor(i-4));
-        }
-        if (loss_actuator < 100 && loss_actuator > -100) {
-           log_coefficient_sensor(coeff_sensor, observed_data[19].read());
-        }
+    for (int i = 0; i < 6; ++i) {
+        coeff_sensor(i) -= update_sensor_coefficient(i);
     }
+    
+
+#ifdef LEARNING_TIMING_LOG
+    auto learning_end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> learning_duration = learning_end - learning_start;
+    std::ofstream timefile("../log/log_learning_time.csv", std::ios::app);
+    if (timefile.is_open()) {
+        timefile << learning_duration.count() << "," << observed_data[19].read() << std::endl;
+        timefile.close();
+    }
+#endif 
+
+    // #################################################################################### Update Model ####################################################################################
+
+    for (int i = 0; i < 4; ++i){
+        model_parameter[i].write(coeff_actuator(i));
+    }
+    for (int i = 4; i < 10; ++i){
+        model_parameter[i].write(coeff_sensor(i-4));
+    }
+
+#ifdef LEARNING_PROGRESS_LOG
+    log_coefficient_sensor(coeff_sensor, observed_data[19].read());
+    log_coefficient_actuator(coeff_actuator(0), coeff_actuator(1), coeff_actuator(2), coeff_actuator(3), observed_data[19].read());
     log_loss_to_csv(loss_actuator, loss_sensor, observed_data[19].read()); // maneuver_loss, sensor_loss, data_number
+#endif
 }
 
 double Model_Learning::predict_actuator_power(const Eigen::Vector4d& x, const Eigen::VectorXd& d, double data_number) {
@@ -171,7 +157,9 @@ double Model_Learning::predict_actuator_power(const Eigen::Vector4d& x, const Ei
     double C = h*(mass_sum);
     double nominator = A+x(2)*B + x(3)*C;
     double denominator = x(0);
+#ifdef LEARNING_PROGRESS_LOG
     log_A_B_C(  A,  B,  C,  data_number);
+#endif
     return (nominator / (denominator + 1e-8))+x(1);
 }
 

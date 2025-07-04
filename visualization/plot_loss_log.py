@@ -15,8 +15,8 @@ df_subset = df[160:200].reset_index(drop=True)
 print(df_subset['counter'].min(), df_subset['counter'].max())
 
 # Plotting the loss values
-plt.plot(df_subset['Model_1'], label='Model 1 Loss', color='blue')
-#plt.plot(df_subset['Model_2'], label='Model 2 Loss', color='red')
+#plt.plot(df_subset['Model_1'], label='Model 1 Loss', color='blue')
+plt.plot(df_subset['Model_2'], label='Model 2 Loss', color='red')
 #plt.plot(df_subset['counter'], label='counter', color='green')
 
 # Adding titles and labels

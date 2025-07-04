@@ -1,6 +1,7 @@
 #include "optimizer.h"
 #include "gurobi_c++.h"
 #include "parameter.h"
+#include "callback.h"
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -8,42 +9,40 @@
 #include <fstream>
 
 int success = 0;
-class print_callback: public GRBCallback
-{
-  public:
-    std::ofstream* logfile;
-    double runtime = 0.0;
-    print_callback(std::ofstream* xlogfile) {
-      logfile = xlogfile;
-    }
-  protected:
-    void callback () {
-      try {
-        if (where == GRB_CB_MIPSOL){
-            runtime = getDoubleInfo(GRB_CB_RUNTIME);
-            //std::cout << "Callback called at runtime: " << runtime << std::endl;
-            *logfile << runtime << "\n";
-        }
-      } catch (GRBException e) {
-        std::cout << "Error number: " << e.getErrorCode() << std::endl;
-        std::cout << e.getMessage() << std::endl;
-      } catch (...) {
-        std::cout << "Error during callback" << std::endl;
-      }
-    }
-};
 
 void Optimizer::optimize() { 
-  if (!OPTIMIZER_ON)return;
+  if (!OPTIMIZER_ON || observed_data[19].read() < 2 || counter == observed_data[19].read() )return;
+  counter = observed_data[19].read(); // Update counter to the latest data
 
-  if (model_parameter[1].read() == 0){
-      return;
+  // optimize at a certain interval of model parameter or weather updates
+#ifdef FIX_MODEL_PARAMETER
+  static int weather_update_counter = 0;
+  static double last_weather_prediction[2] = {0.0, 0.0};
+  bool weather_changed = false;
+  for (int i = 0; i < 2; ++i) {
+    double current_weather = weather_prediction[i].read();
+    if (current_weather != last_weather_prediction[i]) {
+      weather_changed = true;
+      last_weather_prediction[i] = current_weather;
+    }
   }
-  if (counter == observed_data[19].read()) {
-      return; // No new data to process
-  }else {
-      counter = observed_data[19].read(); // Update counter to the latest data
+  if (weather_changed) weather_update_counter++;
+  if (weather_update_counter % OPTIMIZE_WEATHER_CHANGE_INTERVAL != 0) return;
+#else
+  static int model_param_update_counter = 0;
+  static std::vector<double> last_model_params(7, 0.0);
+  bool model_param_changed = false;
+  for (int i = 0; i < 7; ++i) {
+    double current_param = model_parameter[i].read();
+    if (current_param != last_model_params[i]) {
+      model_param_changed = true;
+      last_model_params[i] = current_param;
+    }
   }
+  if (model_param_changed) model_param_update_counter++;
+  if (model_param_update_counter % OPTIMIZE_INTERVAL != 0) return;
+#endif
+
   try{
 
   #ifdef SUCCESS_LIMIT
@@ -77,7 +76,7 @@ void Optimizer::optimize() {
     double wp_theta_wind = weather_prediction[1].read();   
     // model_param for drone typr (for now only conside one type)
 
-    #ifndef FIX_MODEL_PARAMETER
+#ifndef FIX_MODEL_PARAMETER
     float pa_eta = model_parameter[0].read();  
     float pa_delta = model_parameter[1].read(); 
     float pa_alpha = model_parameter[2].read(); 
@@ -86,7 +85,7 @@ void Optimizer::optimize() {
     float ps_a = model_parameter[4].read();
     float ps_b = model_parameter[5].read();
     float ps_c = model_parameter[6].read();
-    #else
+#else
     double fix_model_parameter[] = {0.31862743382724822982510204383289, 0.2127602615282839781940538159688, 0.097328390658043009708855208828027, 0.0021011339810415512012464755997598, 1.1463925428785151083843629749026, 10.212336874294889454972690145951, -1.88007013107074638647020492499}; 
     double pa_eta = fix_model_parameter[0]; //model_parameter[0].read();  
     double pa_delta = fix_model_parameter[1]; //model_parameter[1].read(); 
@@ -96,7 +95,7 @@ void Optimizer::optimize() {
     double ps_a = fix_model_parameter[4];//model_parameter[4].read();
     double ps_b = fix_model_parameter[5];//model_parameter[5].read();
     double ps_c = fix_model_parameter[6]; //model_parameter[6].read();
-    #endif
+#endif
 
     // observed data (set of done mass. for now consider each drone will have the same payload mass)
     double drone_payload_mass = 0;
@@ -115,9 +114,11 @@ void Optimizer::optimize() {
   
 
     GRBEnv env = GRBEnv(true);
-
-    env.set(GRB_IntParam_OutputFlag, OUTPUT_FLAG);
-
+#ifdef PRINT_GUROBI_OUTPUT_FLAG
+    env.set(GRB_IntParam_OutputFlag, 1);
+#else
+    env.set(GRB_IntParam_OutputFlag, 0); // Disable Gurobi output
+#endif
     env.start();
     GRBModel model = GRBModel(env);
     model.set(GRB_IntParam_NonConvex, 2);
@@ -217,8 +218,12 @@ void Optimizer::optimize() {
         drone_is_used[drone] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "drone_used_" + std::to_string(drone));
         drone_used_total += drone_is_used[drone];
     }
+  
+  #if DYNAMIC_DRONE
     model.addQConstr(drone_used_total <= num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available          case_x_1
-    //model.addQConstr(drone_used_total == 2, "drone_used_total_limit"); // limit the number of drones used to the number of drones available                 case_x_2 case_x_3
+  #else
+    model.addQConstr(drone_used_total == num_drones, "drone_used_total_limit"); // limit the number of drones used to the number of drones available          case_x_2 case_x_3
+  #endif
 
     for (int drone = 0; drone < num_drones; drone++) {
       // drone basic variables
@@ -380,19 +385,12 @@ void Optimizer::optimize() {
   
     // objective optimization
     model.setObjective(objective_expr , GRB_MINIMIZE);//GRB_MAXIMIZE);//
-    model.set(GRB_DoubleParam_MIPGap, OPTIMALITY_GAP); // 5% optimality gap
-    //model.set(GRB_DoubleParam_TimeLimit, 60); // 60 seconds time limit
-    model.set(GRB_IntParam_Threads, 8); // Use 4 threads
-    //model.set(GRB_IntParam_Presolve, 2); // Aggressive presolve
-    //model.set(GRB_IntParam_Cuts, 2);  //Generate more cuts
-    //model.set(GRB_IntParam_CutPasses, 20); //Limit the number of cut passes
-    //model.set(GRB_DoubleParam_Heuristics, 1.0); //Spend 50% of time on heuristics
-    //model.set(GRB_IntParam_MIPFocus, 1); //Focus on finding feasible solutions
-    //model.set(GRB_IntParam_RINS, 10); //Enable RINS heuristic with a frequency of 10 nodes
+
+    // optimization parameters
+    SET_GUROBI_SOLVER_PARAMS(model) 
 
     // print info
-    // Create a callback object and associate it with the model
-    // Open log file
+#ifdef OPTIMIZATION_TIMING_LOG
     std::ofstream logfile("../log/log_runtime_tmp.log", std::ios::app);
     if (!logfile.is_open()) {
       std::cout << "Cannot open log_runtime_tmp.log for callback message" << std::endl;
@@ -400,41 +398,53 @@ void Optimizer::optimize() {
     }
     print_callback cb_ = print_callback(&logfile);
     model.setCallback(&cb_);
+#endif
 
     model.optimize();
+
+#ifdef OPTIMIZATION_TIMING_LOG
     logfile.close();
+#endif
   //####################################################################################  handle result ##################################################################################
+
+
 
 
     int model_status = model.get(GRB_IntAttr_Status);
     if (model_status == GRB_OPTIMAL) {
       success += 1;
-      std::cout << "wind speed: " << weather_prediction[0].read() << std::endl;
-      std::cout << "wind angle: " << weather_prediction[1].read() << std::endl;
       double total_pa = 0.0, total_ps = 0.0, total_power = 0.0, total_energy = 0.0, total_covered_area = 0.0;
+      double last_runtime = -1.0; // Read the last runtime value from log_runtime_tmp.log
 
-      // --- CSV output block ---
-      // Read the last runtime value from log_runtime_tmp.log
-      double last_runtime = -1.0;
-      {
-        std::ifstream runtime_log("../log/log_runtime_tmp.log");
-        std::string line;
-        while (std::getline(runtime_log, line)) {
-          if (!line.empty()) {
-        try {
-          last_runtime = std::stod(line);
-        } catch (...) {
-          // Ignore conversion errors
-        }
-          }
+#ifdef OPTIMIZATION_TIMING_LOG
+      // last_runtime contains the last value from the log file from call back funciton (or -1.0 if not found)
+
+      std::ifstream runtime_log("../log/log_runtime_tmp.log");
+      std::string line;
+      while (std::getline(runtime_log, line)) {
+        if (!line.empty()) {
+      try {
+        last_runtime = std::stod(line);
+      } catch (...) {
+        // Ignore conversion errors
+      }
         }
       }
-      // Now last_runtime contains the last value from the log file (or -1.0 if not found)
+#endif // OPTIMIZATION_TIMING_LOG
+
+
+
+#ifdef PRINT_OPTIMIZATION_RESULTS
+      std::cout << "wind speed: " << weather_prediction[0].read() << std::endl;
+      std::cout << "wind angle: " << weather_prediction[1].read() << std::endl;
+
+      // --- CSV output block ---
+#ifdef OPTIMIZATION_RESULT_LOG
       std::ofstream csv("../log/log_optimization_results.csv", std::ios::app);
       if (csv.tellp() == 0) {
         csv << "counter,drone,used,v,v_true,h,fps,pix,pix_x,pix_y,covered_area_x_t0,covered_area_y_t0,covered_area_total_t0,covered_area_total,covered_area_true,number_of_place_covered,covered_distance,operation_time,pa_consumption,ps_consumption,power,energy,charging_cycles,operation_time_req\n";
       }
-      // --- end CSV header ---
+#endif // OPTIMIZATION_RESULT_LOG
 
       for (int drone = 0; drone < num_drones; drone++) {
         if(drone_is_used[drone].get(GRB_DoubleAttr_X)){
@@ -473,7 +483,7 @@ void Optimizer::optimize() {
           total_energy += drone_energy_consumption[drone].get(GRB_DoubleAttr_X);
           total_covered_area += covered_area_true[drone].get(GRB_DoubleAttr_X);
 
-          // --- Write to CSV ---
+#ifdef OPTIMIZATION_RESULT_LOG
           csv << counter << "," << drone << ","
               << drone_is_used[drone].get(GRB_DoubleAttr_X) << ","
               << drone_v[drone].get(GRB_DoubleAttr_X)*drone_is_used[drone].get(GRB_DoubleAttr_X) << ","
@@ -498,11 +508,12 @@ void Optimizer::optimize() {
               << charging_cycles[drone].get(GRB_DoubleAttr_X)*drone_is_used[drone].get(GRB_DoubleAttr_X) << ","
               << operation_time_req[drone].get(GRB_DoubleAttr_X)*drone_is_used[drone].get(GRB_DoubleAttr_X)
               << "\n";
-          // --- end CSV row ---
+#endif // OPTIMIZATION_RESULT_LOG
         }
       }
+#ifdef OPTIMIZATION_RESULT_LOG
       csv.close();
-      // --- end CSV output block ---
+#endif // OPTIMIZATION_RESULT_LOG
 
     std::cout << "Total Actuator Power: " << total_pa << std::endl;
     std::cout << "Total Sensor Power: " << total_ps << std::endl;
@@ -517,13 +528,14 @@ void Optimizer::optimize() {
     //std::cout << "ps_a: " << ps_a << " ,ps_b: " << ps_b << " ,ps_c: " << ps_c << std::endl;
     std::cout << "Total operation time: " << operation_time_total.get(GRB_DoubleAttr_X) << std::endl;
 
-    // Store last_runtime in a CSV file
+#ifdef OPTIMIZATION_TIMING_LOG
     std::ofstream runtime_csv("../log/log_runtime_results.csv", std::ios::app);
     if (runtime_csv.tellp() == 0) {
       runtime_csv << "counter,last_runtime\n";
     }
     runtime_csv << counter << "," << last_runtime << "\n";
     runtime_csv.close();
+#endif // OPTIMIZATION_TIMING_LOG
 
     } else {
       //return; ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,6 +547,7 @@ void Optimizer::optimize() {
         std::cout << "Model is unbounded. Please check constraints and input data." << std::endl;
       }
     }
+#endif // PRINT_OPTIMIZATION_RESULTS
     // Export model for diagnostics
     //model.write("model.lp"); // Export model to LP file for inspection
   } catch (GRBException &e) {
@@ -547,6 +560,7 @@ void Optimizer::optimize() {
     std::cout << "Unknown exception caught in fifth block." << std::endl;
     return;
   }
+
   return;
 } 
 

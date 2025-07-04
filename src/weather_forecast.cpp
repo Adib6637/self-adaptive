@@ -39,6 +39,7 @@ void Weather_Forecast::forecast() {
     weather_forecast[1].write(theta_wind);  // theta_wind
 
     // Record v_wind and theta_wind in CSV
+#ifdef WEATHER_FORECAST_LOG
     static bool header_written = false;
     std::ofstream csv(file_name_csv, std::ios::app);
     if (!header_written && csv.tellp() == 0) {
@@ -47,6 +48,7 @@ void Weather_Forecast::forecast() {
     }
     csv << v_wind << "," << theta_wind << "\n";
     csv.close();
+#endif // WEATHER_FORECAST_LOG
     //std::cout << "Weather forecast updated: v_wind = " << v_wind << ", theta_wind = " << theta_wind << std::endl;
 }
 

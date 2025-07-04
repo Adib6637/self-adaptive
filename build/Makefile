@@ -153,6 +153,30 @@ simulation.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/simulation.cpp.s
 .PHONY : simulation.cpp.s
 
+src/callback.o: src/callback.cpp.o
+.PHONY : src/callback.o
+
+# target to build an object file
+src/callback.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/callback.cpp.o
+.PHONY : src/callback.cpp.o
+
+src/callback.i: src/callback.cpp.i
+.PHONY : src/callback.i
+
+# target to preprocess a source file
+src/callback.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/callback.cpp.i
+.PHONY : src/callback.cpp.i
+
+src/callback.s: src/callback.cpp.s
+.PHONY : src/callback.s
+
+# target to generate assembly for a file
+src/callback.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/callback.cpp.s
+.PHONY : src/callback.cpp.s
+
 src/constraint_tuner.o: src/constraint_tuner.cpp.o
 .PHONY : src/constraint_tuner.o
 
@@ -381,6 +405,9 @@ help:
 	@echo "... simulation.o"
 	@echo "... simulation.i"
 	@echo "... simulation.s"
+	@echo "... src/callback.o"
+	@echo "... src/callback.i"
+	@echo "... src/callback.s"
 	@echo "... src/constraint_tuner.o"
 	@echo "... src/constraint_tuner.i"
 	@echo "... src/constraint_tuner.s"
