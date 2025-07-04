@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Set the range of rows to analyze (by index). Use None for full range.
-start = 12-5  # e.g., 0
-end = 12    # e.g., 10
+start = 12-5  
+end = 12   
 
 # Load the CSV file (skip the first column, use the second column 'last_runtime')
 df = pd.read_csv("../log/log_runtime_results.csv")

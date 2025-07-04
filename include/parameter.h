@@ -6,14 +6,14 @@
 #define SIMULATION_CASE 1
 #define SIMULATION_SUB_CASE 1
 
-#define AREA_DEFAULT            30000.0 
+#define AREA_DEFAULT            80000.0 
 #define LIMIT_AREA_TEST         50000                       // only for case 5  {640,1280 ,1600 }
 #define DRONE_SET_PIX_TEST      {307200,1433600, 2240000}   // only for case 6  {640,1280 ,1600 }
 #define DRONE_SET_PIX_X_TEST    {640,1280 ,1600 }           // only for case 6  {640,1280 ,1600 }
 #define DRONE_SET_PIX_Y_TEST    {480,1120 ,1400 }           // only for case 6  {480,1120 ,1400 } 
 #define DRONE_SET_FPS_TEST      {30, 60, 90}                // only for case 6  {30, 60, 90}  
 
-#define OPTIMIZER_GAP 0.0
+#define OPTIMIZER_GAP 0.1
 
 
 #define SIMULATION_DURATION_NS  2200

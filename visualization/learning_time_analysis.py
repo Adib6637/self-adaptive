@@ -1,6 +1,6 @@
 import pandas as pd
 
-# Load the CSV file (assuming the first column is execution time)
+# Load the CSV file 
 df = pd.read_csv("../log/log_learning_time.csv", header=None, names=["time", "counter"])
 
 # Calculate statistics
