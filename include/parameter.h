@@ -8,7 +8,7 @@
 
 #define AREA_DEFAULT            80*1000 
 #define LIMIT_AREA_TEST         100*1000                     // only for case 5  {640,1280 ,1600 }
-#define DRONE_SET_PIX_TEST      { 2240000}   // only for case 6  {640,1280 ,1600 }
+#define DRONE_SET_PIX_TEST      {2240000}   // only for case 6  {640,1280 ,1600 }
 #define DRONE_SET_PIX_X_TEST    {1600 }           // only for case 6  {640,1280 ,1600 }
 #define DRONE_SET_PIX_Y_TEST    {1400 }           // only for case 6  {480,1120 ,1400 } 
 #define DRONE_SET_FPS_TEST      {90}                // only for case 6  {30, 60, 90}  

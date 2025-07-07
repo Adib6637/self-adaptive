@@ -1,13 +1,18 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 # --- Configuration ---
 
-case = 0
+case = 6
 sub = 0
+cat = '3/'
 test = f'c_{case}_{sub}/'
-test= ''
-file_path = f'../log/{test}log_optimization_results.csv'
+file_path = f'../log/{test}{cat}log_optimization_results.csv'
+# Helper: get output directory for saving plots
+output_dir = os.path.dirname(file_path)
+os.makedirs(output_dir, exist_ok=True)
+
 NUMERIC_COLS = [
     #'v', 'v_true', 'h', 'fps', 'pix', 'pix_x', 'pix_y',
     #'covered_area_x_t0', 'covered_area_y_t0', 'covered_area_total_t0',
@@ -47,7 +52,7 @@ num_drones = df['drone'].nunique()
 counter_min = df['counter'].min()
 
 # --- Helper Plot Functions ---
-def plot_per_drone(col):
+def plot_per_drone(col, save=True, show=False):
     plt.figure(figsize=(x_size, y_size))
     for drone_id in df['drone'].unique():
         drone_df = df[df['drone'] == drone_id]
@@ -64,9 +69,13 @@ def plot_per_drone(col):
     plt.grid(True)
     plt.xticks(df['counter'].unique())
     plt.tight_layout()
-    plt.show()
+    if save:
+        plt.savefig(os.path.join(output_dir, f'{col}_per_drone.png'))
+    if show:
+        plt.show()
+    plt.close()
 
-def plot_total_per_run(col):
+def plot_total_per_run(col, save=True, show=False):
     plt.figure(figsize=(x_size, y_size))
     totals = df.groupby('counter')[col].sum()
     plt.plot(totals.index, totals.values, marker='s', color='black')
@@ -78,7 +87,11 @@ def plot_total_per_run(col):
     plt.grid(True)
     plt.xticks(totals.index)
     plt.tight_layout()
-    plt.show()
+    if save:
+        plt.savefig(os.path.join(output_dir, f'{col}_total_per_run.png'))
+    if show:
+        plt.show()
+    plt.close()
 
 # --- Analysis & Plots ---
 
@@ -105,9 +118,7 @@ for col in NUMERIC_COLS:
 
 # 3. Total values per run
 for col in NUMERIC_COLS:
-    plot_total_per_run(col)
-
-
+    plot_total_per_run(col, save=True, show=False)
 
 # 4. Total energy vs number of drones used per run
 energy_per_run = df.groupby('counter')['energy'].sum()
@@ -127,7 +138,8 @@ ax2.set_xticks(list(drones_run_indices))
 plt.title('Total Energy vs Number of Drones Used per Run', fontsize=TITLE_FONT_SIZE)
 fig.tight_layout()
 plt.grid(True)
-plt.show()
+plt.savefig(os.path.join(output_dir, 'total_energy_vs_drones_used.png'))
+plt.close()
 
 # 5. Max operation time and number of drones used per run
 max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max() - df.groupby('counter')['charging_cycles'].max()*1200
@@ -162,4 +174,5 @@ plt.title('Objective Expression per Run', fontsize=TITLE_FONT_SIZE)
 plt.grid(True)
 plt.xticks(list(objective_run_indices))
 plt.tight_layout()
-plt.show()
+plt.savefig(os.path.join(output_dir, 'objective_expression_per_run.png'))
+plt.close()
