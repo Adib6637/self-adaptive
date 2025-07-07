@@ -3,24 +3,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////////// case dependent //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SIMULATION_CASE 1
-#define SIMULATION_SUB_CASE 1
+#define SIMULATION_CASE 6
+#define SIMULATION_SUB_CASE 0
 
-#define AREA_DEFAULT            80000.0 
-#define LIMIT_AREA_TEST         50000                       // only for case 5  {640,1280 ,1600 }
-#define DRONE_SET_PIX_TEST      {307200,1433600, 2240000}   // only for case 6  {640,1280 ,1600 }
-#define DRONE_SET_PIX_X_TEST    {640,1280 ,1600 }           // only for case 6  {640,1280 ,1600 }
-#define DRONE_SET_PIX_Y_TEST    {480,1120 ,1400 }           // only for case 6  {480,1120 ,1400 } 
-#define DRONE_SET_FPS_TEST      {30, 60, 90}                // only for case 6  {30, 60, 90}  
+#define AREA_DEFAULT            80*1000 
+#define LIMIT_AREA_TEST         100*1000                     // only for case 5  {640,1280 ,1600 }
+#define DRONE_SET_PIX_TEST      { 2240000}   // only for case 6  {640,1280 ,1600 }
+#define DRONE_SET_PIX_X_TEST    {1600 }           // only for case 6  {640,1280 ,1600 }
+#define DRONE_SET_PIX_Y_TEST    {1400 }           // only for case 6  {480,1120 ,1400 } 
+#define DRONE_SET_FPS_TEST      {90}                // only for case 6  {30, 60, 90}  
 
-#define OPTIMIZER_GAP 0.1
+
+#define DRONE_SET_PIX_DEFAULT      {307200, 1433600, 2240000}
+#define DRONE_SET_PIX_X_DEFAULT    {640, 1280 ,1600 }
+#define DRONE_SET_PIX_Y_DEFAULT    {480, 1120 ,1400 }      
+#define DRONE_SET_FPS_DEFAULT      {30, 60, 90}   
+
+#define OPTIMIZER_GAP 0.0
 
 
 #define SIMULATION_DURATION_NS  2200
-#define OPTIMIZER_ON            true
-#define MODEL_LEARNER_ON        true
-#define MANAGED_SYSTEM_ON       true
-#define DYNAMIC_WEATHER         false
 
 
 #if SIMULATION_CASE == 1    // dynamic model, static weather
@@ -29,54 +31,54 @@
     #define MODEL_LEARNER_ON        true
     #define OPTIMIZER_ON            true
     #define FIELD_AREA              AREA_DEFAULT
-    #define DRONE_SET_PIX           {307200,1433600, 2240000}
-    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
-    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
-    #define DRONE_SET_FPS           {30, 60, 90} 
+    #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_DEFAULT
+    #define DRONE_SET_FPS           DRONE_SET_FPS_DEFAULT
 #elif SIMULATION_CASE == 2  // static model, dynamic weather
     #define DYNAMIC_WEATHER         true
     #define MANAGED_SYSTEM_ON       true
     #define MODEL_LEARNER_ON        false
     #define OPTIMIZER_ON            true
     #define FIELD_AREA              AREA_DEFAULT
-    #define DRONE_SET_PIX           {307200,1433600, 2240000}
-    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
-    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
-    #define DRONE_SET_FPS           {30, 60, 90} 
+    #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_DEFAULT
+    #define DRONE_SET_FPS           DRONE_SET_FPS_DEFAULT
 #elif SIMULATION_CASE == 3  // dynamic model, dynamic weather
     #define DYNAMIC_WEATHER         true
     #define MANAGED_SYSTEM_ON       true
     #define MODEL_LEARNER_ON        true
     #define OPTIMIZER_ON            true
     #define FIELD_AREA              AREA_DEFAULT
-    #define DRONE_SET_PIX           {307200,1433600, 2240000}
-    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
-    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
-    #define DRONE_SET_FPS           {30, 60, 90} 
+    #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_DEFAULT
+    #define DRONE_SET_FPS           DRONE_SET_FPS_DEFAULT
 #elif SIMULATION_CASE == 4  // static model, static weather
     #define DYNAMIC_WEATHER         true
     #define MANAGED_SYSTEM_ON       true
     #define MODEL_LEARNER_ON        true
     #define OPTIMIZER_ON            true
     #define FIELD_AREA              AREA_DEFAULT
-    #define DRONE_SET_PIX           {307200,1433600, 2240000}
-    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
-    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
-    #define DRONE_SET_FPS           {30, 60, 90} 
+    #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_DEFAULT
+    #define DRONE_SET_FPS           DRONE_SET_FPS_DEFAULT
 #elif SIMULATION_CASE == 5  // static model, static weather , limit
-    #define DYNAMIC_WEATHER         false
+    #define DYNAMIC_WEATHER         true
     #define MANAGED_SYSTEM_ON       true
-    #define MODEL_LEARNER_ON        false
+    #define MODEL_LEARNER_ON        true
     #define OPTIMIZER_ON            true
     #define FIELD_AREA              LIMIT_AREA_TEST
-    #define DRONE_SET_PIX           {307200,1433600, 2240000}
-    #define DRONE_SET_PIX_X         {640,1280 ,1600 }
-    #define DRONE_SET_PIX_Y         {480,1120 ,1400 }
-    #define DRONE_SET_FPS           {30, 60, 90} 
+    #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_DEFAULT
+    #define DRONE_SET_FPS           DRONE_SET_FPS_DEFAULT
 #elif SIMULATION_CASE == 6  // static model, static weather
-    #define DYNAMIC_WEATHER         false
+    #define DYNAMIC_WEATHER         true
     #define MANAGED_SYSTEM_ON       true
-    #define MODEL_LEARNER_ON        false
+    #define MODEL_LEARNER_ON        true
     #define OPTIMIZER_ON            true
     #define FIELD_AREA              AREA_DEFAULT
     #define DRONE_SET_PIX           DRONE_SET_PIX_TEST
@@ -272,18 +274,18 @@
 #define POWER_SENSOR        std::get<1>     // Power sensor
 
 // power sensor dataset bounds
-#define FPS_MAX             144.0           // Maximum FPS
-#define FPS_MIN             15.0            // Minimum FPS
-#define PIXELS_MAX          3000000         //2240000.0 // Maximum number of pixels
-#define PIXELS_MIN          200000          //307200.0 // Minimum number of pixels
+#define FPS_MAX             90.0           // Maximum FPS
+#define FPS_MIN             30.0            // Minimum FPS
+#define PIXELS_MAX          2240000         //2240000.0 // Maximum number of pixels
+#define PIXELS_MIN          307200          //307200.0 // Minimum number of pixels
 #define PIX_X_MAX           1600.0          // Maximum pixel x
 #define PIX_X_MIN           640.0           // Minimum pixel x
 #define PIX_Y_MAX           1400.0          // Maximum pixel y
 #define PIX_Y_MIN           480.0           // Minimum pixel y
-#define PIXELS_MAX_LOG      (std::log10(PIXELS_MAX + 1e-8))             // Logarithm of maximum pixels with a small offset to avoid log(0)  
-#define PIXELS_MIN_LOG      (std::log10(PIXELS_MIN + 1e-8))             // Logarithm of minimum pixels with a small offset to avoid log(0)  
+#define PIXELS_MAX_LOG      (std::log10(PIXELS_MAX + 1e-6))             // Logarithm of maximum pixels with a small offset to avoid log(0)  
+#define PIXELS_MIN_LOG      (std::log10(PIXELS_MIN + 1e-6))             // Logarithm of minimum pixels with a small offset to avoid log(0)  
 #define PIXELS_NORMALIZED_DENOMINATOR (PIXELS_MAX_LOG - PIXELS_MIN_LOG) // Normalization denominator for pixels            
-#define LOG_PIXEL(x)        (std::log10((x) + 1e-8)) // Logarithm of pixel value with a small offset to avoid log(0)  
+#define LOG_PIXEL(x)        (std::log10((x) + 1e-6)) // Logarithm of pixel value with a small offset to avoid log(0)  
 #define POWER_SENSOR_MAX    6.0             // Maximum power sensor
 #define POWER_SENSOR_MIN    5.0             // Minimum power sensor
 
@@ -293,13 +295,14 @@
 #define TAN_CAMERA_THETA    (std::tan(CAMERA_THETA_RAD))                // tan camera theta
 #define TAN_CAMERA_THETA_INV            (1.0 / TAN_CAMERA_THETA)        // Inverse of tan camera theta
 #define CONST_2_TAN_CAMERA_THETA        (2.0 * TAN_CAMERA_THETA)        // 2 * tan camera theta
-#define CONST_2_TAN_CAMERA_THETA_INV    (1.0 / CONST_2_TAN_CAMERA_THETA)// Inverse of 2 * tan camera theta
+#define CAMERA_OVERLAP_FACTOR           0.03
+#define CONST_2_TAN_CAMERA_THETA_INV    (1.0 / (CONST_2_TAN_CAMERA_THETA*CAMERA_OVERLAP_FACTOR))// Inverse of 2 * tan camera theta
 #define CONST_8_TAN_3_THETA_CAMERA      (CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA) // 8 * tan^3 camera theta
 #define CONST_8_TAN_3_THETA_CAMERA_INV  (1.0 / CONST_8_TAN_3_THETA_CAMERA)// Inverse of 8 * tan^3 camera theta
 
 // resolution 
-#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.000004
-#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.000002   //sample : (5cmx5cm)/(32x32)
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX 0.000004   
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN 0.000002   //sample : (5cmx5cm)/(32x32)  
 
 // drone constraints
 #define DRONE_MASS          3.680       // Drone mass in kg
@@ -311,7 +314,7 @@
 //#define DRONE_SET_FPS       {30, 60, 90} 
 
 #define COVERED_AREA_X_MAX      (CONST_2_TAN_CAMERA_THETA*ALTITUDE_MAX)     // Maximum area covered in x direction in m
-#define COVERED_AREA_X_MIN      1e-8                                        //(CONST_2_TAN_CAMERA_THETA*ALTITUDE_MIN) // Minimum area covered in x direction in m
+#define COVERED_AREA_X_MIN      1e-5                                        //(CONST_2_TAN_CAMERA_THETA*ALTITUDE_MIN) // Minimum area covered in x direction in m
 #define COVERED_AREA_TOTAL_MAX  (COVERED_AREA_X_MAX * COVERED_AREA_X_MAX)   // Maximum total area covered in m^2
 #define COVERED_AREA_TOTAL_MIN  (COVERED_AREA_X_MIN * COVERED_AREA_X_MIN)   // Minimum total area covered in m^2
 

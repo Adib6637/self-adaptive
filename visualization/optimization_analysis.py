@@ -2,7 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # --- Configuration ---
-file_path = '../log/log_optimization_results.csv' 
+
+case = 0
+sub = 0
+test = f'c_{case}_{sub}/'
+test= ''
+file_path = f'../log/{test}log_optimization_results.csv'
 NUMERIC_COLS = [
     #'v', 'v_true', 'h', 'fps', 'pix', 'pix_x', 'pix_y',
     #'covered_area_x_t0', 'covered_area_y_t0', 'covered_area_total_t0',
