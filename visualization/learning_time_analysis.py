@@ -2,9 +2,9 @@ import pandas as pd
 import os
 
 # Load the CSV file
-case = 6
-sub = 0
-cat = '2/'
+case = 1
+sub = 1
+cat = ''
 test = f'c_{case}_{sub}/'
 file_path = f'../log/{test}{cat}log_learning_time.csv'
 df = pd.read_csv(file_path, header=None, names=["time", "counter"])

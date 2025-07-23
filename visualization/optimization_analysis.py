@@ -1,13 +1,19 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import sys
+
+# Change the working directory to the script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
 
 # --- Configuration ---
 
-case = 6
-sub = 0
-cat = '3/'
+case = 1
+sub = 1
+cat = ''
 test = f'c_{case}_{sub}/'
+test = f''
 file_path = f'../log/{test}{cat}log_optimization_results.csv'
 # Helper: get output directory for saving plots
 output_dir = os.path.dirname(file_path)
@@ -18,12 +24,12 @@ NUMERIC_COLS = [
     #'covered_area_x_t0', 'covered_area_y_t0', 'covered_area_total_t0',
     #'covered_area_total', 'covered_area_true', 'number_of_place_covered',
     #'covered_distance',
-    #'operation_time',
+    'operation_time',
     #'pa_consumption', 'ps_consumption',
     'power', 
     'energy', 
     'charging_cycles',
-    'operation_time_req'
+    #'operation_time_req'
 ]
 COUNTER_RANGE = (0, 45)
 interval = 1
@@ -77,11 +83,23 @@ def plot_per_drone(col, save=True, show=False):
 
 def plot_total_per_run(col, save=True, show=False):
     plt.figure(figsize=(x_size, y_size))
-    totals = df.groupby('counter')[col].sum()
+
+    if col == 'operation_time':
+        ylabel = 'Total Operation Time'
+        title = 'Total Operation Time per Run'
+        totals = df.groupby('counter')[col].max()
+    elif col == 'operation_time_req':
+        ylabel = 'Total Operation Time'
+        title = 'Total Operation Time per Run'
+        totals = df.groupby('operation_time')[col].max() + (df.groupby('counter')['charging_cycles'].max()-1)*1200
+    else:
+        ylabel = f'Total {col.replace("_", " ").title()}'
+        title = f'Total {col.replace("_", " ").title()} per Run'
+        totals =  df.groupby('counter')[col].sum()
+
     plt.plot(totals.index, totals.values, marker='s', color='black')
     plt.xlabel('Run Index', fontsize=XLABEL_FONT_SIZE)
-    ylabel = 'Total Operation Time' if col == 'operation_time_req' else f'Total {col.replace("_", " ").title()}'
-    title = 'Total Operation Time per Run' if col == 'operation_time_req' else f'Total {col.replace("_", " ").title()} per Run'
+
     plt.ylabel(ylabel, fontsize=YLABEL_FONT_SIZE)
     plt.title(title, fontsize=TITLE_FONT_SIZE)
     plt.grid(True)
@@ -141,8 +159,10 @@ plt.grid(True)
 plt.savefig(os.path.join(output_dir, 'total_energy_vs_drones_used.png'))
 plt.close()
 
-# 5. Max operation time and number of drones used per run
-max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max() - df.groupby('counter')['charging_cycles'].max()*1200
+# 5. Max operation time and number of drones used per run 
+#max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max() - df.groupby('counter')['charging_cycles'].max()*1200
+max_operation_time_per_run = df.groupby('counter')['operation_time'].max()
+print(max_operation_time_per_run)
 """
 fig, ax1 = plt.subplots(figsize=(x_size, y_size))
 ax1.set_xlabel('Run Counter)

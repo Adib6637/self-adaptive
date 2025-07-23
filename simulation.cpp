@@ -12,6 +12,8 @@ extern std::vector<std::tuple<double, double, double, double, double, double, do
 extern std::vector<std::tuple<double, double, double, double, double>> sensor_data;
 
 int sc_main(int argc, char* argv[]) {
+    std::cout << "RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX: " << RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX << std::endl;
+    std::cout << "RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN: " << RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN << std::endl;
 
     std::cout << "Starting simulation..." << std::endl;
     if(!MANAGED_SYSTEM_ON){
@@ -28,6 +30,7 @@ int sc_main(int argc, char* argv[]) {
         load_sensor_data();
         std::cout << "Data loaded successfully." << std::endl;
     }
+    std::cout << std::endl;
 
     sc_clock clk("clk", SIMULATION_CLK_TICK_NS, SC_NS);
 
@@ -52,11 +55,9 @@ int sc_main(int argc, char* argv[]) {
     Managed_System managed_system("managed_system");
     managed_system.clk(clk);
     managed_system.system_data(sig_managed_system_data);
-
     std::cout << "OPTIMIZER_ON: " << OPTIMIZER_ON << std::endl;
-    std::cout << "CONSTRAINT_TUNER_ON: " << CONSTRAINT_TUNER_ON << std::endl;
     std::cout << "MODEL_LEARNER_ON: " << MODEL_LEARNER_ON << std::endl;
-
+    std::cout << std::endl;
     std::cout << "Simulation setup complete." << std::endl;
     std::cout << "Starting simulation..." << std::endl;
     sc_start(SIMULATION_DURATION_NS, SC_NS);

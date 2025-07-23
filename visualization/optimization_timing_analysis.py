@@ -2,13 +2,13 @@ import pandas as pd
 import os
 
 # Set the range of rows to analyze (by index). Use None for full range.
-start = 12-5  
-end = 12   
+start = 0
+end = -1
 
 # Load the CSV file (skip the first column, use the second column 'last_runtime')
-case = 6
-sub = 0
-cat = '3/'
+case = 7
+sub = 4
+cat = '10/'
 test = f'c_{case}_{sub}/'
 file_path = f'../log/{test}{cat}log_runtime_results.csv'
 df = pd.read_csv(file_path)
