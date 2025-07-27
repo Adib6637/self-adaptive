@@ -161,7 +161,7 @@ plt.close()
 
 # 5. Max operation time and number of drones used per run 
 #max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max() - df.groupby('counter')['charging_cycles'].max()*1200
-max_operation_time_per_run = df.groupby('counter')['operation_time'].max()
+max_operation_time_per_run = df.groupby('counter')['operation_time_req'].max()
 print(max_operation_time_per_run)
 """
 fig, ax1 = plt.subplots(figsize=(x_size, y_size))
@@ -182,8 +182,8 @@ plt.show()
 # 6. Objective expression per run
 objective_expr_per_run = (
     energy_per_run
-    + 100 * drones_used_per_run
-    + 100 * max_operation_time_per_run
+    + 10000000 * drones_used_per_run
+    + 1000 * max_operation_time_per_run
 )
 objective_run_indices = range(1, len(objective_expr_per_run.index) + 1)
 plt.figure(figsize=(x_size, y_size))

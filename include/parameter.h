@@ -3,25 +3,63 @@
 
 ///////////////////////////////////////////////////////////////////////////////////// case dependent //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// =============================================
 #define SIMULATION_CASE 1
 #define SIMULATION_SUB_CASE 1
 
-#define AREA_DEFAULT            80*1000 
-#define AREA_TEST               100*1000                     // only for case 5  {640,1280 ,1600 }
-#define DRONE_SET_PIX_TEST      {2240000}   // only for case 6  {640,1280 ,1600 }
-#define DRONE_SET_PIX_X_TEST    {1600 }           // only for case 6  {640,1280 ,1600 }
-#define DRONE_SET_PIX_Y_TEST    {1400 }           // only for case 6  {480,1120 ,1400 } 
-#define DRONE_SET_FPS_TEST      {90}                // only for case 6  {30, 60, 90}  
-#define NUMBER_DRONE_MAX_DYNAMIC 15 // only for case 7  {3, 5, 10,15}  
+#define AREA_DEFAULT                100*1000 
+#define SIMULATION_DURATION_NS      222
+#define OPTIMIZER_GAP               0.00000
+#define AREA_TEST                   100*1000   // only for case 5  
+#define NUMBER_DRONE_MAX_DYNAMIC    15         // only for case 7  {3, 5, 10,15}  
+#define OPTIMIZE_INTERVAL           4          // Interval for optimization in number of model parameter updates
+#define DRONE_SET_LENGTH            3          // only for case 6
 
-#define DRONE_SET_PIX_DEFAULT      {307200, 1433600, 2240000}
-#define DRONE_SET_PIX_X_DEFAULT    {640, 1280 ,1600 }
-#define DRONE_SET_PIX_Y_DEFAULT    {480, 1120 ,1400 }      
-#define DRONE_SET_FPS_DEFAULT      {30, 60, 90}   
+#define OPERATION_MAX_PER_CHARGING  1800
+#define CHARGING_TIME               1200
+#define MAX_CHARGING_CYCLE          20
 
-#define OPTIMIZER_GAP 0
+#define SAMPEL_PIXEL_SIZE           32.0        // minimum
+#define SAMPEL_SIZE_CM              15.0         //sample : (5cmx5cm)/(32x32) 
+#define SHUTTER_SPEED               2000        // #define MAX_V_CAPTURING round((GSD/3)*SHUTTER_SPEED) , GSD = Ground Sampling Distance = MINIMUM_SAMPEL_SIZE_M/SAMPEL_PIXEL_SIZE
+#define DRONE_ENERGY_CAPACITY       {21.6e6,21.6e6,21.6e6,21.6e6,21.6e6}
+#define DRONE_ENERGY_CAPACITY_USED  {0,0,0,0,0}
+#define DRONE_IN_USE                {0,0,0,0,0} // priority of the drone in the optimization
 
-#define SIMULATION_DURATION_NS  2200
+#define LEARNING_PROGRESS_LOG   
+#define LEARNING_TIMING_LOG
+#define OPTIMIZATION_TIMING_LOG
+#define OPTIMIZATION_RESULT_LOG 
+#define PRINT_OPTIMIZATION_RESULTS
+#define WEATHER_FORECAST_LOG
+//#define PRINT_GUROBI_OUTPUT_FLAG
+// =============================================
+
+#define DRONE_PIX_VALUES_1      307200
+#define DRONE_PIX_VALUES_2      307200, 1433600
+#define DRONE_PIX_VALUES_3      307200, 1433600, 2240000
+#define DRONE_PIX_X_VALUES_1    640
+#define DRONE_PIX_X_VALUES_2    640, 1280
+#define DRONE_PIX_X_VALUES_3    640, 1280, 1600
+#define DRONE_PIX_Y_VALUES_1    480
+#define DRONE_PIX_Y_VALUES_2    480, 1120
+#define DRONE_PIX_Y_VALUES_3    480, 1120, 1400
+#define DRONE_FPS_VALUES_1      30
+#define DRONE_FPS_VALUES_2      30, 60
+#define DRONE_FPS_VALUES_3      30, 60, 90
+#define SELECT_PIX_VALUES(n)    DRONE_PIX_VALUES_##n
+#define SELECT_PIX_X_VALUES(n)  DRONE_PIX_X_VALUES_##n
+#define SELECT_PIX_Y_VALUES(n)  DRONE_PIX_Y_VALUES_##n
+#define SELECT_FPS_VALUES(n)    DRONE_FPS_VALUES_##n
+
+#define DRONE_SET_PIX_TEST      {SELECT_PIX_VALUES(DRONE_SET_LENGTH)}   // only for case 6  {307200, 1433600, 2240000}
+#define DRONE_SET_PIX_X_TEST    {SELECT_PIX_X_VALUES(DRONE_SET_LENGTH)} // only for case 6  {640,1280 ,1600 }
+#define DRONE_SET_PIX_Y_TEST    {SELECT_PIX_Y_VALUES(DRONE_SET_LENGTH)} // only for case 6  {480,1120 ,1400 } 
+#define DRONE_SET_FPS_TEST      {SELECT_FPS_VALUES(DRONE_SET_LENGTH)}   // only for case 6  {30, 60, 90}  
+#define DRONE_SET_PIX_DEFAULT   {SELECT_PIX_VALUES(3)}
+#define DRONE_SET_PIX_X_DEFAULT {SELECT_PIX_X_VALUES(3)}
+#define DRONE_SET_PIX_Y_DEFAULT {SELECT_PIX_Y_VALUES(3)}      
+#define DRONE_SET_FPS_DEFAULT   {SELECT_FPS_VALUES(3)}   
 
 #if SIMULATION_CASE == 1    // dynamic model, static weather
     #define DYNAMIC_WEATHER         false
@@ -118,24 +156,10 @@
     #define DYNAMIC_DRONE           true
 #endif        
 
-#define OPTIMIZE_INTERVAL                   4      // Interval for optimization in number of model parameter updates  (FIX_MODEL_PARAMETER is not defined)
-#define OPTIMIZE_WEATHER_CHANGE_INTERVAL    4      // Interval for optimization in number of weather changes (FIX_MODEL_PARAMETER is defined AND DYNAMIC_WEATHER is true)
-
-#define LEARNING_PROGRESS_LOG   
-#define LEARNING_TIMING_LOG
-#define OPTIMIZATION_TIMING_LOG
-#define OPTIMIZATION_RESULT_LOG 
-#define PRINT_OPTIMIZATION_RESULTS
-#define WEATHER_FORECAST_LOG
-
-//#define PRINT_GUROBI_OUTPUT_FLAG
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 // simulation time
-#define SIMULATION_CLK_TICK_NS  10
+#define SIMULATION_CLK_TICK_NS  1
 //#define SIMULATION_DURATION_NS  10000 //2200
 
 // simulation component
@@ -148,8 +172,8 @@
 #if !MODEL_LEARNER_ON
 #define FIX_MODEL_PARAMETER
 #endif
-//#define OPTIMIZE_INTERVAL                   4      // Interval for optimization in number of model parameter updates  (FIX_MODEL_PARAMETER is not defined)
-//#define OPTIMIZE_WEATHER_CHANGE_INTERVAL    4      // Interval for optimization in number of weather changes (FIX_MODEL_PARAMETER is defined AND DYNAMIC_WEATHER is true)
+//#define OPTIMIZE_INTERVAL                 4                       // Interval for optimization in number of model parameter updates  (FIX_MODEL_PARAMETER is not defined)
+#define OPTIMIZE_WEATHER_CHANGE_INTERVAL    OPTIMIZE_INTERVAL      // Interval for optimization in number of weather changes (FIX_MODEL_PARAMETER is defined AND DYNAMIC_WEATHER is true)
 
 // simulation environment 
 //#define NUMBER_DRONE_MAX        5               // Number of drones
@@ -167,13 +191,11 @@
 //#define PRINT_GUROBI_OUTPUT_FLAG
 //#define WEATHER_FORECAST_LOG
 
-
-
 // optimization objective
 #define OBJECTIVE_ENERGY_WEIGHT 1.0
-#define OBJECTIVE_DRONE_WEIGHT  1000000.0*0.5
-#define OBJECTIVE_TIME_WEIGHT   1000.0*0.5
-#define OBJECTIVE_CHARGING_CYCLE_WEIGHT 1000000.0*0.5
+#define OBJECTIVE_DRONE_WEIGHT  10000000.0
+#define OBJECTIVE_TIME_WEIGHT   1000.0
+#define OBJECTIVE_CHARGING_CYCLE_WEIGHT 1000000.0
 
 // optimization parameters
 #define SET_GUROBI_SOLVER_PARAMS(model)                \
@@ -292,29 +314,27 @@
 #define POWER_SENSOR_MIN    5.0             // Minimum power sensor
 
 // folding 
-#define CAMERA_THETA_DEG    (80.0/2)                                    // Camera theta in degrees
-#define CAMERA_THETA_RAD    (CAMERA_THETA_DEG * M_PI / 180.0)           // Camera theta in radians
-#define TAN_CAMERA_THETA    (std::tan(CAMERA_THETA_RAD))                // tan camera theta
-#define TAN_CAMERA_THETA_INV            (1.0 / TAN_CAMERA_THETA)        // Inverse of tan camera theta
-#define CONST_2_TAN_CAMERA_THETA        (2.0 * TAN_CAMERA_THETA)        // 2 * tan camera theta
-#define CAMERA_OVERLAP_FACTOR           0.03
-#define CONST_2_TAN_CAMERA_THETA_INV    (1.0 / (CONST_2_TAN_CAMERA_THETA*CAMERA_OVERLAP_FACTOR))// Inverse of 2 * tan camera theta
-#define CONST_8_TAN_3_THETA_CAMERA      (CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA) // 8 * tan^3 camera theta
-#define CONST_8_TAN_3_THETA_CAMERA_INV  (1.0 / CONST_8_TAN_3_THETA_CAMERA)// Inverse of 8 * tan^3 camera theta
+#define CAMERA_THETA_DEG                                (80.0/2)                                                    // Camera theta in degrees
+#define CAMERA_THETA_RAD                                (CAMERA_THETA_DEG * M_PI / 180.0)                           // Camera theta in radians
+#define TAN_CAMERA_THETA                                (std::tan(CAMERA_THETA_RAD))                                // tan camera theta
+#define TAN_CAMERA_THETA_INV                            (1.0 / TAN_CAMERA_THETA)                                    // Inverse of tan camera theta
+#define CONST_2_TAN_CAMERA_THETA                        (2.0 * TAN_CAMERA_THETA)                                    // 2 * tan camera theta
+#define CAMERA_OVERLAP_FACTOR                           0.03
+#define CONST_2_TAN_CAMERA_THETA_OVERLAP_FACTOR         CONST_2_TAN_CAMERA_THETA*CAMERA_OVERLAP_FACTOR
+#define CONST_2_TAN_CAMERA_THETA_OVERLAP_FACTOR_INV     (1.0 / (CONST_2_TAN_CAMERA_THETA*CAMERA_OVERLAP_FACTOR))    // Inverse of 2 * tan camera theta
+#define CONST_8_TAN_3_THETA_CAMERA                      (CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA) // 8 * tan^3 camera theta
+#define CONST_8_TAN_3_THETA_CAMERA_INV                  (1.0 / CONST_8_TAN_3_THETA_CAMERA)                          // Inverse of 8 * tan^3 camera theta
 
 // resolution 
-#define SAMPEL_PIXEL_SIZE 32.0 // minimum
-#define MINIMUM_SAMPEL_SIZE_CM 5.0 //sample : (5cmx5cm)/(32x32) 
-#define MAXIMUM_SAMPEL_SIZE_CM 7.0
-#define MINIMUM_SAMPEL_SIZE_M MINIMUM_SAMPEL_SIZE_CM/100.0
-#define MAXIMUM_SAMPEL_SIZE_M MAXIMUM_SAMPEL_SIZE_CM/100.0
-#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX ceil(((MAXIMUM_SAMPEL_SIZE_M*MAXIMUM_SAMPEL_SIZE_M)/(SAMPEL_PIXEL_SIZE*SAMPEL_PIXEL_SIZE))*1000000)/1000000  
-#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN floor(((MINIMUM_SAMPEL_SIZE_M*MINIMUM_SAMPEL_SIZE_M)/(SAMPEL_PIXEL_SIZE*SAMPEL_PIXEL_SIZE))*1000000)/1000000   
+//#define SAMPEL_PIXEL_SIZE 32.0 // minimum
+//#define SAMPEL_SIZE_CM 5.0 //sample : (5cmx5cm)/(32x32) 
+#define SAMPEL_SIZE_M SAMPEL_SIZE_CM/100.0
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX ceil(((SAMPEL_SIZE_M*SAMPEL_SIZE_M)/(SAMPEL_PIXEL_SIZE*SAMPEL_PIXEL_SIZE))*1000000)/1000000  
+#define RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN floor(((SAMPEL_SIZE_M*SAMPEL_SIZE_M)/(SAMPEL_PIXEL_SIZE*SAMPEL_PIXEL_SIZE))*1000000)/1000000   
 
-#define GSD MINIMUM_SAMPEL_SIZE_M/SAMPEL_PIXEL_SIZE
-#define SHUTTER_SPEED 2000
-#define MAX_V_CAPTURING (GSD/3)*SHUTTER_SPEED
-
+#define GSD SAMPEL_SIZE_M/SAMPEL_PIXEL_SIZE
+//#define SHUTTER_SPEED 2000
+#define MAX_V_CAPTURING floor((GSD/3)*SHUTTER_SPEED)
 
 // drone constraints
 #define DRONE_MASS          3.680       // Drone mass in kg
@@ -324,6 +344,7 @@
 //#define DRONE_SET_PIX_X     {640,1280 ,1600 }
 //#define DRONE_SET_PIX_Y     {480,1120 ,1400 }
 //#define DRONE_SET_FPS       {30, 60, 90} 
+//#define DRONE_ENERGY_CAPACITY {0,0,0,0,0}
 
 #define COVERED_AREA_X_MAX      (CONST_2_TAN_CAMERA_THETA*ALTITUDE_MAX)     // Maximum area covered in x direction in m
 #define COVERED_AREA_X_MIN      1e-5                                        //(CONST_2_TAN_CAMERA_THETA*ALTITUDE_MIN) // Minimum area covered in x direction in m
@@ -337,10 +358,14 @@
 #define OPERATION_TIME_MAX          GRB_INFINITY            //(COVERED_DISTANCE_MAX / SPEED_MIN) // Maximum operation time in seconds
 #define OPERATION_TIME_MIN          0                       //Minimum operation time in seconds
 
-#define OPERATION_MAX_PER_CHARGING      1800
+//#define OPERATION_MAX_PER_CHARGING      2400
 #define OPERATION_MAX_PER_CHARGING_INV  (1.0 / OPERATION_MAX_PER_CHARGING) // Inverse of maximum operation time per charging in seconds
-#define CHARGING_TIME                   1200
-#define MAX_CHARGING_CYCLE              100
+//#define CHARGING_TIME                   1200
+//#define MAX_CHARGING_CYCLE              10
+
+// helperfunctions
+#define PRINT_LOG(len, var,val) std::cout << std::left << std::setw(len) << var << ":\t" << val << std::endl; 
+#define PRINT_LOG_NEW_LINE std::cout << std::endl; 
 
 #endif // SIM_PARAM
 

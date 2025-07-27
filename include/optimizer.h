@@ -19,9 +19,8 @@ SC_MODULE(Optimizer) {
     sc_core::sc_vector<sc_out<double>> power_consumption;
     sc_core::sc_vector<sc_out<double>> operation_time;
 
-    double counter;
-
     void optimize();
+    bool reasoning(); 
 
     SC_CTOR(Optimizer)
         : model_parameter("model_parameter", 20),
@@ -30,8 +29,7 @@ SC_MODULE(Optimizer) {
           observed_data("observed_data", 20),
           cfg("cfg", 20),
           power_consumption("power_consumption", 20),
-          operation_time("operation_time", 20),
-          counter(-1)
+          operation_time("operation_time", 20)
     {
         SC_METHOD(optimize);
         sensitive << clk.pos();

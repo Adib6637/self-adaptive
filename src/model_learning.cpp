@@ -4,6 +4,7 @@
 #include <fstream>
 #include <ctime>
 #include <chrono>
+#include <iomanip>
 
 void log_loss_to_csv(double maneuver_loss, double sensor_loss, double data_number);
 void log_coefficient_actuator( double eta, double delta, double alpha, double beta, double data_number);
@@ -270,7 +271,7 @@ void load_model_coefficient() {
 
         coefficient_data.emplace_back(d_a_0, d_a_1, d_a_2, d_a_3, d_s_0, d_s_1, d_s_2, d_s_3, d_s_4, d_s_5);
     }
-    std::cout << "coefficient_data size: " << coefficient_data.size() << std::endl;
+    PRINT_LOG(18, "coefficient_data size",coefficient_data.size())
 
 }
 

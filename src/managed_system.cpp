@@ -8,6 +8,7 @@
 #include <string>
 #include <iomanip>
 #include <vector>
+#include <iomanip>
 
 std::vector<std::tuple<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double>> manuever_data;
 std::vector<std::tuple<double, double, double, double, double>> sensor_data;
@@ -357,7 +358,7 @@ void load_sensor_data() {
 
         sensor_data.emplace_back(fps_val, power_val, pix_val, res_x_val,res_y_val);
     }
-    std::cout << "sensor_data size: " << sensor_data.size() << std::endl;
+    PRINT_LOG(18, "sensor_data size",sensor_data.size())
 }
 
 void load_manuever_data() {
@@ -485,7 +486,8 @@ void load_manuever_data() {
             altitude_val
         );
     }
-    std::cout << "manuever_data size: " << manuever_data.size() << std::endl;
+    
+    PRINT_LOG(18, "manuever_data size",manuever_data.size())
 }
 
 bool hasExcessivePrecision(double value, int maxPrecision) {

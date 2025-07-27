@@ -39,7 +39,8 @@ SC_MODULE(Model_Learning) {
           //coeff_actuator(0.329957,-0.45514,0.0968531,0.00146015), // initial guess [eta, delta, alpha, beta]    0.316843,0.548003,0.0973508,0.00219821 ##########
           //coeff_actuator(0.316843,0.548003,0.0973508,0.00219821),
           coeff_actuator(0.3182,0.2893,0.0973508,0.0973),
-          epsilon_actuator(1e-4), 
+          //coeff_actuator(0.3,0.2,0.1,0.1),
+          epsilon_actuator(1e-3), 
           lr_actuator(1e-2),
           decay_actuator(0.98),
           epsilon_sensor(1e-4),
