@@ -2,6 +2,7 @@
 clear
 
 rm -f log/log* 
+rm -f weight/* 
 
 cd build || { echo "Failed to change directory"; exit 1; }
 

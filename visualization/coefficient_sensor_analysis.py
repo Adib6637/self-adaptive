@@ -1,5 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
+import sys
+
+# Change the working directory to the script's directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
 
 # Read the CSV file
 file_path = '../log/log_coefficient_actuator.csv'  

@@ -1,0 +1,123 @@
+#include "model_learning.h"
+#include "parameter.h"
+#include <cmath>
+#include <fstream>
+#include <ctime>
+#include <chrono>
+#include <iomanip>
+#include "mlp.h"
+
+void log_loss_to_csv(double maneuver_loss, double sensor_loss, double data_number);
+void load_weight();
+void load_model_coefficient();
+
+
+void Model_Learning::learning() {
+    if (!MODEL_LEARNER_ON || observed_data[19].read() == 0 || counter == observed_data[19].read()) return; 
+    counter = observed_data[19].read();
+    
+    if (!MANAGED_SYSTEM_ON) {
+        return;
+    }
+
+    // observed data
+    double acceleration_z_normalized = observed_data[0].read();
+    double mass_d_normalized = (DRONE_MASS - MASS_MIN) / (MASS_MAX - MASS_MIN);
+    double mass_p_normalized = observed_data[1].read();
+    double altitude_normalized = observed_data[2].read();
+    double wind_speed_normalized = observed_data[3].read();
+    double wind_angle = observed_data[4].read();
+    double speed_normalized = observed_data[5].read();
+    double power_actuator_normalized = observed_data[6].read();
+    double power_actuator = (observed_data[6].read()* (POWER_ACTUATOR_MAX - POWER_ACTUATOR_MIN)) + POWER_ACTUATOR_MIN;
+    double fps_normalized = observed_data[7].read();
+    double pix_normalized = observed_data[8].read();
+    double pix_x_normalized = observed_data[10].read();
+    double pix_y_normalized = observed_data[11].read();
+    double power_sensor_normalized = observed_data[9].read();
+
+    // Prepare input vectors
+    Eigen::VectorXd d(8);
+    d(0) = acceleration_z_normalized;
+    d(1) = mass_d_normalized;
+    d(2) = mass_p_normalized;
+    d(3) = altitude_normalized;
+    d(4) = (H_REF-ALTITUDE_MIN)/(ALTITUDE_MAX-ALTITUDE_MIN);
+    d(5) = wind_speed_normalized;
+    d(6) = wind_angle;
+    d(7) = speed_normalized;
+    double power_actuator_measured = power_actuator_normalized;
+
+    Eigen::VectorXd d_s(2);
+    d_s(0) = fps_normalized;
+    d_s(1) = pix_normalized;
+    double power_sensor_measured = power_sensor_normalized;
+
+#ifdef LEARNING_TIMING_LOG
+    auto learning_start = std::chrono::steady_clock::now();
+#endif
+
+// ########################## Actuator Power Model Neural Network ##########################
+    // Forward pass
+    double power_actuator_pred = actuator_nn.forward(d); 
+    //double loss_actuator = 0.5 * std::pow(power_actuator_pred - power_actuator_measured, 2);
+    double loss_actuator = power_actuator_pred - power_actuator_measured;
+
+    // Backward pass
+    actuator_nn.backward(power_actuator_pred, power_actuator_measured); 
+
+// ########################## Sensor Power Model Neural Network ##########################
+    double power_sensor_pred = sensor_nn.forward(d_s);
+    double loss_sensor = 0.5 * std::pow(power_sensor_pred - power_sensor_measured, 2);
+
+    sensor_nn.backward(power_sensor_pred, power_sensor_measured); 
+
+#ifdef LEARNING_TIMING_LOG
+    auto learning_end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> learning_duration = learning_end - learning_start;
+    std::ofstream timefile("../log/log_learning_time.csv", std::ios::app);
+    if (timefile.is_open()) {
+        timefile << learning_duration.count() << "," << observed_data[19].read() << std::endl;
+        timefile.close();
+    }
+#endif 
+#ifdef LEARNING_PROGRESS_LOG
+    log_loss_to_csv(loss_actuator, loss_sensor, observed_data[19].read());
+#endif
+    actuator_nn.save_weights("../weight/actuator_nn_weights.csv");
+    sensor_nn.save_weights("../weight/sensor_nn_weights.csv");
+}
+
+void log_loss_to_csv(double maneuver_loss, double sensor_loss, double data_number) {
+    std::ofstream file("../log/log_loss.csv", std::ios::app); // Open in append mode
+    if (file.is_open()) {
+        file << maneuver_loss << "," << sensor_loss <<"," << data_number << std::endl;
+        file.close();
+    }
+}
+
+void load_weight() {
+    std::ifstream actuator_file("../weight/actuator_nn_weights.csv");
+    if (actuator_file.good()) {
+        actuator_nn.load_weights("../weight/actuator_nn_weights.csv");
+    } else {
+        std::cerr << "Warning: Could not open ../weight/actuator_nn_weights.csv. Using default weights." << std::endl;
+    }
+    actuator_file.close();
+
+    std::ifstream sensor_file("../weight/sensor_nn_weights.csv");
+    if (sensor_file.good()) {
+        sensor_nn.load_weights("../weight/sensor_nn_weights.csv");
+    } else {
+        std::cerr << "Warning: Could not open ../weight/sensor_nn_weights.csv. Using default weights." << std::endl;
+    }
+    sensor_file.close();
+}
+
+
+double Model_Learning::predict_actuator_power(const Eigen::Vector4d& x, const Eigen::VectorXd& d, double data_number) {}
+double Model_Learning::predict_sensor_power(const Eigen::VectorXd& x, const Eigen::VectorXd& d, double data_number) {}
+void Model_Learning::simulate_coefficient_data(){}
+void load_model_coefficient(){}
+
+

@@ -9,18 +9,21 @@
 #include <iomanip>
 #include <vector>
 #include <iomanip>
+#include <random>
+#include <algorithm>
 
 std::vector<std::tuple<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double>> manuever_data;
 std::vector<std::tuple<double, double, double, double, double>> sensor_data;
 
 extern double quaternionToYaw360(double x, double y, double z, double w);
-extern double computeResultantSpeed(double vx, double vy, double vz);
+extern double computeResultantSpeed(double vx, double vy);
 int rejected_data_counter = 0;
 void load_manuever_data();
 void load_sensor_data();
 bool hasExcessivePrecision(double value, int maxPrecision);
 
-std::string manuever_data_file = "../dataset/flights.csv";
+//std::string manuever_data_file = "../dataset/flight_filtered.csv";
+std::string manuever_data_file = "../dataset/flight_filtered_clean.csv";
 std::string sensor_data_file = "../dataset/camera.csv";
 
 //sc_out<double> system_data[10]; //drone mass, payload mass, altitute, wind speed, wind angle, speed of drone,power actuator, umber of pixel, fps, power sensor
@@ -43,9 +46,8 @@ void Managed_System::simulate(){
         counter+=1;
         return; 
     }
-    
+
     auto data = manuever_data[counter];
-    //std::cout << "counter: " << counter << std::endl;
 
     // actuator related
     double wind_speed = WIND_SPEED(data);
@@ -54,7 +56,7 @@ void Managed_System::simulate(){
     double battery_current = BATTERY_CURRENT(data);
     double position_x = POSITION_X(data);   
     double position_y = POSITION_Y(data);
-    double position_z = POSITION_Z(data);
+    double position_z_rel = POSITION_Z(data) - H_REF;
     double orientation_x = ORIENTATION_X(data);
     double orientation_y = ORIENTATION_Y(data);
     double orientation_z = ORIENTATION_Z(data);
@@ -86,7 +88,7 @@ void Managed_System::simulate(){
     double battery_current_normalized = (battery_current - BATTERY_CURRENT_MIN) / (BATTERY_CURRENT_MAX - BATTERY_CURRENT_MIN); // Normalize battery current
     //double position_x_normalized = (position_x - POSITION_X_MIN) / (POSITION_X_MAX - POSITION_X_MIN); // Normalize position x
     //double position_y_normalized = (position_y - POSITION_Y_MIN) / (POSITION_Y_MAX - POSITION_Y_MIN); // Normalize position y
-    //double position_z_normalized = (position_z - POSITION_Z_MIN) / (POSITION_Z_MAX - POSITION_Z_MIN); // Normalize position z
+    double position_z_normalized = (position_z_rel - POSITION_Z_MIN) / (POSITION_Z_MAX - POSITION_Z_MIN); // Normalize position z
     //double orientation_x_normalized = (orientation_x - ORIENTATION_X_MIN) / (ORIENTATION_X_MAX - ORIENTATION_X_MIN); // Normalize orientation x
     //double orientation_y_normalized = (orientation_y - ORIENTATION_Y_MIN) / (ORIENTATION_Y_MAX - ORIENTATION_Y_MIN); // Normalize orientation y
     //double orientation_z_normalized = (orientation_z - ORIENTATION_Z_MIN) / (ORIENTATION_Z_MAX - ORIENTATION_Z_MIN); // Normalize orientation z
@@ -99,7 +101,7 @@ void Managed_System::simulate(){
     //double angular_z_normalized = (angular_z - ANGULAR_Z_MIN) / (ANGULAR_Z_MAX - ANGULAR_Z_MIN); // Normalize angular z
     //double linear_acceleration_x_normalized = (linear_acceleration_x - LINEAR_ACCELERATION_X_MIN) / (LINEAR_ACCELERATION_X_MAX - LINEAR_ACCELERATION_X_MIN); // Normalize linear acceleration x
     //double linear_acceleration_y_normalized = (linear_acceleration_y - LINEAR_ACCELERATION_Y_MIN) / (LINEAR_ACCELERATION_Y_MAX - LINEAR_ACCELERATION_Y_MIN); // Normalize linear acceleration y
-    //double linear_acceleration_z_normalized = (linear_acceleration_z - LINEAR_ACCELERATION_Z_MIN) / (LINEAR_ACCELERATION_Z_MAX - LINEAR_ACCELERATION_Z_MIN); // Normalize linear acceleration z
+    double linear_acceleration_z_normalized = (linear_acceleration_z - LINEAR_ACCELERATION_Z_MIN) / (LINEAR_ACCELERATION_Z_MAX - LINEAR_ACCELERATION_Z_MIN); // Normalize linear acceleration z
     double speed_normalized = (speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN); // Normalize speed
     double payload_normalized = (payload - PAYLOAD_MIN) / (PAYLOAD_MAX - PAYLOAD_MIN); // Normalize payload
     double altitude_normalized = (altitude - ALTITUDE_MIN) / (ALTITUDE_MAX - ALTITUDE_MIN); // Normalize altitude
@@ -124,9 +126,9 @@ void Managed_System::simulate(){
     double power_sensor_normalized = (power_sensor - POWER_SENSOR_MIN) / (POWER_SENSOR_MAX - POWER_SENSOR_MIN); // Normalize power sensor
 
 
-    system_data[0].write(drone_mass_normalized); // drone mass
+    system_data[0].write(linear_acceleration_z_normalized); // drone mass
     system_data[1].write(payload_normalized); // payload mass
-    system_data[2].write(altitude_normalized); // altitude
+    system_data[2].write(position_z_normalized); // altitude z_position
     system_data[3].write(wind_speed_normalized); // wind speed
     system_data[4].write(wind_angle_relative); // wind angle relative to drone
     system_data[5].write(speed_normalized); // speed of drone
@@ -142,28 +144,38 @@ void Managed_System::simulate(){
 
 bool  data_check(int counter) {
     if (counter > 800000) {
+#ifdef DATA_CHECK_LOG
         std::cout << "Max data reached, stopping simulation." << std::endl;
+#endif
         while(1){} // Stop the simulation
     }
     auto data = manuever_data[counter];
     // wind speed
     if (WIND_SPEED(data) < WIND_SPEED_MIN || WIND_SPEED(data) > WIND_SPEED_MAX) {
-        //std::cout << "Wind speed out of range: " << WIND_SPEED(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Wind speed out of range: " << WIND_SPEED(data) << std::endl;
+#endif
         return false;
     }
     // wind angle
     if (WIND_ANGLE(data) < WIND_ANGLE_MIN || WIND_ANGLE(data) > WIND_ANGLE_MAX) {
-        //std::cout << "Wind angle out of range: " << WIND_ANGLE(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Wind angle out of range: " << WIND_ANGLE(data) << std::endl;
+#endif
         return false;
     }
     // battery voltage
-    if (BATTERY_VOLTAGE(data) < BATTERY_VOLTAGE_MIN || BATTERY_VOLTAGE(data) > BATTERY_VOLTAGE_MAX) {   
-        //std::cout << "Battery voltage out of range: " << BATTERY_VOLTAGE(data) << std::endl;
+    if (BATTERY_VOLTAGE(data) < BATTERY_VOLTAGE_MIN || BATTERY_VOLTAGE(data) > BATTERY_VOLTAGE_MAX) {
+#ifdef DATA_CHECK_LOG
+        std::cout << "Battery voltage out of range: " << BATTERY_VOLTAGE(data) << std::endl;
+#endif
         return false;
     }
     // battery current
     if (BATTERY_CURRENT(data) < BATTERY_CURRENT_MIN || BATTERY_CURRENT(data) > BATTERY_CURRENT_MAX) {
-        //std::cout << "Battery current out of range: " << BATTERY_CURRENT(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Battery current out of range: " << BATTERY_CURRENT(data) << std::endl;
+#endif
         return false;
     }
     // position x
@@ -177,28 +189,38 @@ bool  data_check(int counter) {
     //     return false;
     // }
     // position z
-    // if (POSITION_Z(data) < POSITION_Z_MIN || POSITION_Z(data) > POSITION_Z_MAX) {
-    //     std::cout << "Position Z out of range: " << POSITION_Z(data) << std::endl;
-    //     return false;
-    // }
+    if ((POSITION_Z(data) - H_REF) < POSITION_Z_MIN || (POSITION_Z(data) - H_REF) > POSITION_Z_MAX) {
+#ifdef DATA_CHECK_LOG
+        std::cout << "Position Z out of range: " << POSITION_Z(data) - H_REF << std::endl;
+#endif
+        return false;
+    }
     // orientation x
     if (ORIENTATION_X(data) < ORIENTATION_X_MIN || ORIENTATION_X(data) > ORIENTATION_X_MAX) {
-        //std::cout << "Orientation X out of range: " << ORIENTATION_X(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Orientation X out of range: " << ORIENTATION_X(data) << std::endl;
+#endif
         return false;
     }
     // orientation y
     if (ORIENTATION_Y(data) < ORIENTATION_Y_MIN || ORIENTATION_Y(data) > ORIENTATION_Y_MAX) {
-        //std::cout << "Orientation Y out of range: " << ORIENTATION_Y(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Orientation Y out of range: " << ORIENTATION_Y(data) << std::endl;
+#endif
         return false;
     }
     // orientation z
     if (ORIENTATION_Z(data) < ORIENTATION_Z_MIN || ORIENTATION_Z(data) > ORIENTATION_Z_MAX) {
-        //std::cout << "Orientation Z out of range: " << ORIENTATION_Z(data) << std::endl;    
+#ifdef DATA_CHECK_LOG
+        std::cout << "Orientation Z out of range: " << ORIENTATION_Z(data) << std::endl;
+#endif
         return false;
     }
     // orientation w
     if (ORIENTATION_W(data) < ORIENTATION_W_MIN || ORIENTATION_W(data) > ORIENTATION_W_MAX) {
-        //std::cout << "Orientation W out of range: " << ORIENTATION_W(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Orientation W out of range: " << ORIENTATION_W(data) << std::endl;
+#endif
         return false;
     }
     // velocity x   
@@ -243,44 +265,56 @@ bool  data_check(int counter) {
     // }
     //linear acceleration z
     if (LINEAR_ACCELERATION_Z(data) < LINEAR_ACCELERATION_Z_MIN || LINEAR_ACCELERATION_Z(data) > LINEAR_ACCELERATION_Z_MAX) {
-        //std::cout << "Linear Acceleration Z out of range: " << LINEAR_ACCELERATION_Z(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Linear Acceleration Z out of range: " << LINEAR_ACCELERATION_Z(data) << std::endl;
+#endif
         return false;
     }
     // speed
     if (SPEED(data) < SPEED_MIN || SPEED(data) > SPEED_MAX) {
-        //std::cout << "Speed out of range: " << SPEED(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Speed out of range: " << SPEED(data) << std::endl;
+#endif
         return false;
     }
     // payload
     if (PAYLOAD(data) < PAYLOAD_MIN || PAYLOAD(data) > PAYLOAD_MAX) {
-        //std::cout << "Payload out of range: " << PAYLOAD(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Payload out of range: " << PAYLOAD(data) << std::endl;
+#endif
         return false;
     }
     // altitude
     if (ALTITUDE(data) < ALTITUDE_MIN || ALTITUDE(data) > ALTITUDE_MAX) {
-        //std::cout << "Altitude out of range: " << ALTITUDE(data) << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Altitude out of range: " << ALTITUDE(data) << std::endl;
+#endif
         return false;
     }
     // flight category
-    if (FLIGHT_CAT < FLIGHT_CAT_MIN - 1 || FLIGHT_CAT > FLIGHT_CAT_MAX + 1) {
-        //std::cout << "Flight category out of range: " << std::get<0>(data) << std::endl;
+    if (FLIGHT_CAT(data) < FLIGHT_CAT_MIN - 1 || FLIGHT_CAT(data) > FLIGHT_CAT_MAX + 1) {
+#ifdef DATA_CHECK_LOG
+        std::cout << "Flight category out of range: " << std::get<0>(data) << std::endl;
+#endif
         return false;
     }
     // power
     double power_actuator = BATTERY_VOLTAGE(data) * BATTERY_CURRENT(data);
     if (power_actuator < POWER_ACTUATOR_MIN || power_actuator > POWER_ACTUATOR_MAX) {
-        //std::cout << "Power actuator out of range: " << power_actuator << std::endl;
+#ifdef DATA_CHECK_LOG
+        std::cout << "Power actuator out of range: " << power_actuator << std::endl;
+#endif
         return false;
     }
     // Check for excessive precision
     if (1
         //&& hasExcessivePrecision(WIND_SPEED(data), 3),  
         //&& hasExcessivePrecision(WIND_ANGLE(data), 3),
-        && hasExcessivePrecision(BATTERY_VOLTAGE(data), 9) // battery voltage
+        && hasExcessivePrecision(BATTERY_VOLTAGE(data), 10) // battery voltage
         && hasExcessivePrecision(BATTERY_CURRENT(data), 10) // battery current
         //&& hasExcessivePrecision(POSITION_X(data), 9) // position x
         //&& hasExcessivePrecision(POSITION_Y(data), 9) // position y
-        //&& hasExcessivePrecision(POSITION_Z(data), 8) // position z
+        && hasExcessivePrecision(POSITION_Z(data), 10) // position z
         && hasExcessivePrecision(ORIENTATION_X(data), 10) // orientation x
         && hasExcessivePrecision(ORIENTATION_Y(data), 10) // orientation y
         && hasExcessivePrecision(ORIENTATION_Z(data), 10) // orientation z
@@ -458,6 +492,8 @@ void load_manuever_data() {
         std::getline(ss, token, ',');
         double altitude_val = std::stod(token);
 
+        
+
         manuever_data.emplace_back(
             flight_val,
             time_val,
@@ -481,7 +517,7 @@ void load_manuever_data() {
             linear_acceleration_x_val,
             linear_acceleration_y_val,
             linear_acceleration_z_val,
-            speed_val,
+            computeResultantSpeed(velocity_x_val, velocity_y_val), // speed_val
             payload_val,
             altitude_val
         );
@@ -501,4 +537,16 @@ bool hasExcessivePrecision(double value, int maxPrecision) {
             return decimals.length() > maxPrecision;
         }
         return false;
+}
+
+void shuffle_data() {
+    // Create a random number generator
+    std::random_device rd;
+    std::mt19937 g(rd());
+
+    // Shuffle the manuever_data vector
+    std::shuffle(manuever_data.begin(), manuever_data.end(), g);
+    
+    // Also shuffle the corresponding sensor data to maintain alignment
+    std::shuffle(sensor_data.begin(), sensor_data.end(), g);
 }

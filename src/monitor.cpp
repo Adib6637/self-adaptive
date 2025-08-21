@@ -7,7 +7,6 @@
 
 
 void Monitor::monitor(){
-
     for (int i = 0; i < 20; ++i) {
         observed_data[i].write(managed_system_data[i].read());
         //std::cout<< observed_data[i] <<std::endl;

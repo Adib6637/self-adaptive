@@ -14,13 +14,12 @@ double quaternionToYaw360(double x, double y, double z, double w) {
     if (yaw_degrees < 0) {
         yaw_degrees += 360.0;
     }
-
     return yaw_degrees; // heading relative to north
 }
 
 // Function to compute the resultant speed of the drone
-double computeResultantSpeed(double vx, double vy, double vz) {
-    return std::sqrt(vx * vx + vy * vy + vz * vz);
+double computeResultantSpeed(double vx, double vy) {
+    return std::sqrt(vx * vx + vy * vy);
 }
 
 

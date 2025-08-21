@@ -4,26 +4,24 @@
 ///////////////////////////////////////////////////////////////////////////////////// case dependent //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // =============================================
-#define SIMULATION_CASE 1
-#define SIMULATION_SUB_CASE 1
+#define SIMULATION_CASE 0
+#define SIMULATION_SUB_CASE 0
 
 #define AREA_DEFAULT                100*1000 
-#define SIMULATION_DURATION_NS      222
+#define SIMULATION_DURATION_NS      300000
 #define OPTIMIZER_GAP               0.00000
 #define AREA_TEST                   100*1000   // only for case 5  
-#define NUMBER_DRONE_MAX_DYNAMIC    15         // only for case 7  {3, 5, 10,15}  
+#define NUMBER_DRONE_MAX_DYNAMIC    5         // only for case 7  {3, 5, 10,15}  
 #define OPTIMIZE_INTERVAL           4          // Interval for optimization in number of model parameter updates
 #define DRONE_SET_LENGTH            3          // only for case 6
 
-#define OPERATION_MAX_PER_CHARGING  1800
+
 #define CHARGING_TIME               1200
-#define MAX_CHARGING_CYCLE          20
+#define MAX_CHARGING_CYCLE          600
 
 #define SAMPEL_PIXEL_SIZE           32.0        // minimum
-#define SAMPEL_SIZE_CM              15.0         //sample : (5cmx5cm)/(32x32) 
+#define SAMPEL_SIZE_CM              20.0        //sample : (5cmx5cm)/(32x32) 
 #define SHUTTER_SPEED               2000        // #define MAX_V_CAPTURING round((GSD/3)*SHUTTER_SPEED) , GSD = Ground Sampling Distance = MINIMUM_SAMPEL_SIZE_M/SAMPEL_PIXEL_SIZE
-#define DRONE_ENERGY_CAPACITY       {21.6e6,21.6e6,21.6e6,21.6e6,21.6e6}
-#define DRONE_ENERGY_CAPACITY_USED  {0,0,0,0,0}
 #define DRONE_IN_USE                {0,0,0,0,0} // priority of the drone in the optimization
 
 #define LEARNING_PROGRESS_LOG   
@@ -33,6 +31,15 @@
 #define PRINT_OPTIMIZATION_RESULTS
 #define WEATHER_FORECAST_LOG
 //#define PRINT_GUROBI_OUTPUT_FLAG
+//#define DATA_CHECK_LOG
+
+
+#define E_BAT_WH(c_mAh, v)          99.9 //(c_mAh*v)/1000)*6000000000000
+#define DRONE_ENERGY_CAPACITY       {E_BAT_WH(4500,22.2),E_BAT_WH(4500,22.2),E_BAT_WH(4500,22.2),E_BAT_WH(4500,22.2),E_BAT_WH(4500,22.2)}
+#define DRONE_ENERGY_CAPACITY_USED  {0,0,0,0,0}
+
+
+
 // =============================================
 
 #define DRONE_PIX_VALUES_1      307200
@@ -61,7 +68,17 @@
 #define DRONE_SET_PIX_Y_DEFAULT {SELECT_PIX_Y_VALUES(3)}      
 #define DRONE_SET_FPS_DEFAULT   {SELECT_FPS_VALUES(3)}   
 
-#if SIMULATION_CASE == 1    // dynamic model, static weather
+#if SIMULATION_CASE == 0    // custom
+    #define DYNAMIC_WEATHER         false
+    #define MANAGED_SYSTEM_ON       true
+    #define MODEL_LEARNER_ON        true
+    #define OPTIMIZER_ON            true
+    #define FIELD_AREA              AREA_DEFAULT
+    #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
+    #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT
+    #define DRONE_SET_PIX_Y         DRONE_SET_PIX_Y_DEFAULT
+    #define DRONE_SET_FPS           DRONE_SET_FPS_DEFAULT
+#elif SIMULATION_CASE == 1    // dynamic model, static weather
     #define DYNAMIC_WEATHER         false
     #define MANAGED_SYSTEM_ON       true
     #define MODEL_LEARNER_ON        true
@@ -139,7 +156,10 @@
     #define FIELD_AREA              0.0
 #endif
 
-#if SIMULATION_SUB_CASE == 1
+#if SIMULATION_SUB_CASE == 0
+    #define NUMBER_DRONE_MAX        5
+    #define DYNAMIC_DRONE           true
+#elif SIMULATION_SUB_CASE == 1
     #define NUMBER_DRONE_MAX        5
     #define DYNAMIC_DRONE           true
 #elif SIMULATION_SUB_CASE == 2
@@ -176,11 +196,11 @@
 #define OPTIMIZE_WEATHER_CHANGE_INTERVAL    OPTIMIZE_INTERVAL      // Interval for optimization in number of weather changes (FIX_MODEL_PARAMETER is defined AND DYNAMIC_WEATHER is true)
 
 // simulation environment 
-//#define NUMBER_DRONE_MAX        5               // Number of drones
+//#define NUMBER_DRONE_MAX        5              
 //#define FIELD_AREA              30000.0       // Field area in m^2  https://sugarindustry.info/paper/15166/
-//#define FIELD_AREA_INV          (1.0 / FIELD_AREA) // Inverse of field area
 #define GRAVITY                 9.81            // Gravity constant in m/s^2
-#define H_REF                   100.0           // Reference height in meters
+#define H_REF                   258.0           // Reference height in meters
+#define H_REF_INV               (1.0 / H_REF)
 
 // logging (define to enable) 
 //#define LEARNING_PROGRESS_LOG   
@@ -195,7 +215,7 @@
 #define OBJECTIVE_ENERGY_WEIGHT 1.0
 #define OBJECTIVE_DRONE_WEIGHT  10000000.0
 #define OBJECTIVE_TIME_WEIGHT   1000.0
-#define OBJECTIVE_CHARGING_CYCLE_WEIGHT 1000000.0
+#define OBJECTIVE_CHARGING_CYCLE_WEIGHT 10000000.0
 
 // optimization parameters
 #define SET_GUROBI_SOLVER_PARAMS(model)                \
@@ -234,23 +254,23 @@
 #define SPEED                   std::get<22>
 #define PAYLOAD                 std::get<23>
 #define ALTITUDE                std::get<24>   
-#define FLIGHT_CAT              std::get<0>(data) 
+#define FLIGHT_CAT              std::get<0>
 
 // power actuator dataset bounds
 #define BATTERY_VOLTAGE_MAX     26.0        // Maximum battery voltage
-#define BATTERY_VOLTAGE_MIN     19.0        // Minimum battery voltage
-#define BATTERY_CURRENT_MAX     40          // Maximum battery current             
-#define BATTERY_CURRENT_MIN     18          // Minimum battery current             
-#define WIND_SPEED_MAX          18.0        // Maximum wind speed
+#define BATTERY_VOLTAGE_MIN     18.0        // Minimum battery voltage
+#define BATTERY_CURRENT_MAX     48.0        // Maximum battery current             
+#define BATTERY_CURRENT_MIN     15.0        // Minimum battery current             
+#define WIND_SPEED_MAX          19.0        // Maximum wind speed
 #define WIND_SPEED_MIN          0.0         // Minimum wind speed
 #define WIND_ANGLE_MAX          360.0       // Maximum wind angle
 #define WIND_ANGLE_MIN          0.0         // Minimum wind angle
-//#define POSITION_X_MAX        100.0       // Maximum position x
-//#define POSITION_X_MIN       -100.0       // Minimum position x
-//#define POSITION_Y_MAX        100.0       // Maximum position y
-//#define POSITION_Y_MIN       -100.0       // Minimum position y
-//#define POSITION_Z_MAX        100.0       // Maximum position z
-//#define POSITION_Z_MIN       -100.0       // Minimum position z
+//#define POSITION_X_MAX        -70.0       // Maximum position x
+//#define POSITION_X_MIN        -80.0       // Minimum position x
+//#define POSITION_Y_MAX        41.0        // Maximum position y
+//#define POSITION_Y_MIN        40.0        // Minimum position y
+#define POSITION_Z_MAX        120.0         // Maximum position z
+#define POSITION_Z_MIN          0.0         // Minimum position z
 #define ORIENTATION_X_MAX       1.0         // Maximum orientation x
 #define ORIENTATION_X_MIN      -1.0         // Minimum orientation x
 #define ORIENTATION_Y_MAX       1.0         // Maximum orientation y
@@ -259,36 +279,36 @@
 #define ORIENTATION_Z_MIN      -1.0         // Minimum orientation z
 #define ORIENTATION_W_MAX       1.0         // Maximum orientation w
 #define ORIENTATION_W_MIN      -1.0         // Minimum orientation w
-//#define VELOCITY_X_MAX        100.0       // Maximum velocity x
-//#define VELOCITY_X_MIN      -100.0        // Minimum velocity x
-//#define VELOCITY_Y_MAX        100.0       // Maximum velocity y
-//#define VELOCITY_Y_MIN       -100.0       // Minimum velocity y
-//#define VELOCITY_Z_MAX        100.0       // Maximum velocity z
-//#define VELOCITY_Z_MIN       -100.0       // Minimum velocity z
-//#define ANGULAR_X_MAX         10.0        // Maximum angular x
-//#define ANGULAR_X_MIN        -10.0        // Minimum angular x
-//#define ANGULAR_Y_MAX         10.0        // Maximum angular y
-//#define ANGULAR_Y_MIN        -10.0        // Minimum angular y
-//#define ANGULAR_Z_MAX         10.0        // Maximum angular z
-//#define ANGULAR_Z_MIN        -10.0        // Minimum angular z
-//#define LINEAR_ACCELERATION_X_MAX     10.0// Maximum linear acceleration x
-//#define LINEAR_ACCELERATION_X_MIN    -10.0// Minimum linear acceleration x
-//#define LINEAR_ACCELERATION_Y_MAX     10.0// Maximum linear acceleration y
+#define VELOCITY_X_MAX          11.0        // Maximum velocity x
+#define VELOCITY_X_MIN         -6.0         // Minimum velocity x
+#define VELOCITY_Y_MAX          13.0        // Maximum velocity y
+#define VELOCITY_Y_MIN         -5.0         // Minimum velocity y
+#define VELOCITY_Z_MAX          6.0         // Maximum velocity z
+#define VELOCITY_Z_MIN         -5.0         // Minimum velocity z
+//#define ANGULAR_X_MAX         3.0         // Maximum angular x
+//#define ANGULAR_X_MIN        -3.0         // Minimum angular x
+//#define ANGULAR_Y_MAX         3.0         // Maximum angular y
+//#define ANGULAR_Y_MIN        -14.0        // Minimum angular y
+//#define ANGULAR_Z_MAX         3.0         // Maximum angular z
+//#define ANGULAR_Z_MIN        -2.0         // Minimum angular z
+//#define LINEAR_ACCELERATION_X_MAX     5.0 // Maximum linear acceleration x
+//#define LINEAR_ACCELERATION_X_MIN    -6.0 // Minimum linear acceleration x
+//#define LINEAR_ACCELERATION_Y_MAX     8.0 // Maximum linear acceleration y
 //#define LINEAR_ACCELERATION_Y_MIN    -10.0// Minimum linear acceleration y
-#define LINEAR_ACCELERATION_Z_MAX      -9.6 // Maximum linear acceleration z
-#define LINEAR_ACCELERATION_Z_MIN      -10.0// Minimum linear acceleration z
+#define LINEAR_ACCELERATION_Z_MAX      -3.0 // Maximum linear acceleration z
+#define LINEAR_ACCELERATION_Z_MIN      -23.0// Minimum linear acceleration z  
 #define SPEED_MAX               12.0        // Maximum speed
 #define SPEED_MIN               0.0         // Minimum speed
-#define PAYLOAD_MAX             750.0       // Maximum payload
+#define PAYLOAD_MAX             3.5//0.75        // Maximum payload
 #define PAYLOAD_MIN             0.0         // Minimum payload
-#define ALTITUDE_MAX            100.0       // Maximum altitude
-#define ALTITUDE_MIN            0.0         // Minimum altitude
-#define FLIGHT_CAT_MAX          100.0       // Maximum flight category
-#define FLIGHT_CAT_MIN          0.0         // Minimum flight category
+#define ALTITUDE_MAX            POSITION_Z_MAX       // Maximum altitude
+#define ALTITUDE_MIN            POSITION_Z_MIN        // Minimum altitude
+#define FLIGHT_CAT_MAX          277.0       // Maximum flight category
+#define FLIGHT_CAT_MIN          1.0         // Minimum flight category
 
 // power actuator bounds
-#define POWER_ACTUATOR_MAX      800.0       // Maximum actuator power                
-#define POWER_ACTUATOR_MIN      350.0       // Minimum actuator power  
+#define POWER_ACTUATOR_MAX      1005.0      // Maximum actuator power                
+#define POWER_ACTUATOR_MIN      0.0         // Minimum actuator power  
 
 // power sensor dataset
 #define FPS                 std::get<0>     // FPS
@@ -317,13 +337,9 @@
 #define CAMERA_THETA_DEG                                (80.0/2)                                                    // Camera theta in degrees
 #define CAMERA_THETA_RAD                                (CAMERA_THETA_DEG * M_PI / 180.0)                           // Camera theta in radians
 #define TAN_CAMERA_THETA                                (std::tan(CAMERA_THETA_RAD))                                // tan camera theta
-#define TAN_CAMERA_THETA_INV                            (1.0 / TAN_CAMERA_THETA)                                    // Inverse of tan camera theta
 #define CONST_2_TAN_CAMERA_THETA                        (2.0 * TAN_CAMERA_THETA)                                    // 2 * tan camera theta
 #define CAMERA_OVERLAP_FACTOR                           0.03
 #define CONST_2_TAN_CAMERA_THETA_OVERLAP_FACTOR         CONST_2_TAN_CAMERA_THETA*CAMERA_OVERLAP_FACTOR
-#define CONST_2_TAN_CAMERA_THETA_OVERLAP_FACTOR_INV     (1.0 / (CONST_2_TAN_CAMERA_THETA*CAMERA_OVERLAP_FACTOR))    // Inverse of 2 * tan camera theta
-#define CONST_8_TAN_3_THETA_CAMERA                      (CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA * CONST_2_TAN_CAMERA_THETA) // 8 * tan^3 camera theta
-#define CONST_8_TAN_3_THETA_CAMERA_INV                  (1.0 / CONST_8_TAN_3_THETA_CAMERA)                          // Inverse of 8 * tan^3 camera theta
 
 // resolution 
 //#define SAMPEL_PIXEL_SIZE 32.0 // minimum
@@ -337,8 +353,8 @@
 #define MAX_V_CAPTURING floor((GSD/3)*SHUTTER_SPEED)
 
 // drone constraints
-#define DRONE_MASS          3.680       // Drone mass in kg
-#define MASS_MAX            10.0        // Maximum mass
+#define DRONE_MASS          2.43        // Drone mass in kg
+#define MASS_MAX            3.5         // Maximum mass
 #define MASS_MIN            0.0         // Minimum mass
 //#define DRONE_SET_PIX       {307200,1433600, 2240000}
 //#define DRONE_SET_PIX_X     {640,1280 ,1600 }
@@ -347,19 +363,18 @@
 //#define DRONE_ENERGY_CAPACITY {0,0,0,0,0}
 
 #define COVERED_AREA_X_MAX      (CONST_2_TAN_CAMERA_THETA*ALTITUDE_MAX)     // Maximum area covered in x direction in m
-#define COVERED_AREA_X_MIN      1e-5                                        //(CONST_2_TAN_CAMERA_THETA*ALTITUDE_MIN) // Minimum area covered in x direction in m
+#define COVERED_AREA_X_MIN      0.0                                           //(CONST_2_TAN_CAMERA_THETA*ALTITUDE_MIN) // Minimum area covered in x direction in m
 #define COVERED_AREA_TOTAL_MAX  (COVERED_AREA_X_MAX * COVERED_AREA_X_MAX)   // Maximum total area covered in m^2
 #define COVERED_AREA_TOTAL_MIN  (COVERED_AREA_X_MIN * COVERED_AREA_X_MIN)   // Minimum total area covered in m^2
 
-#define NUMBER_PLACE_COVERED_MAX    (FIELD_AREA / COVERED_AREA_TOTAL_MIN)
+#define NUMBER_PLACE_COVERED_MAX    GRB_INFINITY
 #define NUMBER_PLACE_COVERED_MIN    (FIELD_AREA / COVERED_AREA_TOTAL_MAX)
-#define COVERED_DISTANCE_MAX        (COVERED_AREA_X_MAX*NUMBER_PLACE_COVERED_MAX - COVERED_AREA_X_MAX)
+#define COVERED_DISTANCE_MAX        GRB_INFINITY
 #define COVERED_DISTANCE_MIN        COVERED_AREA_X_MIN
 #define OPERATION_TIME_MAX          GRB_INFINITY            //(COVERED_DISTANCE_MAX / SPEED_MIN) // Maximum operation time in seconds
 #define OPERATION_TIME_MIN          0                       //Minimum operation time in seconds
 
 //#define OPERATION_MAX_PER_CHARGING      2400
-#define OPERATION_MAX_PER_CHARGING_INV  (1.0 / OPERATION_MAX_PER_CHARGING) // Inverse of maximum operation time per charging in seconds
 //#define CHARGING_TIME                   1200
 //#define MAX_CHARGING_CYCLE              10
 
@@ -368,6 +383,10 @@
 #define PRINT_LOG_NEW_LINE std::cout << std::endl; 
 
 #endif // SIM_PARAM
+
+
+//not relevant
+//#define OPERATION_MAX_PER_CHARGING  1800 
 
 
 

@@ -3,7 +3,10 @@
 
 #include <systemc>
 #include <vector>
+#include <deque>
 #include <Eigen/Dense>
+#include <memory>
+#include "mlp.h"
 
 using namespace sc_core;
 
@@ -12,46 +15,57 @@ SC_MODULE(Model_Learning) {
     sc_core::sc_vector<sc_in<double>> observed_data;
     sc_core::sc_vector<sc_out<double>> model_parameter;  
 
-    Eigen::Vector4d coeff_actuator; // global parameters: [eta, delta, alpha, beta] for manuever
-    Eigen::VectorXd coeff_sensor;  // global parameters: [sigma, omega, epsilon] for camera  
-
-    // Gradient descent step actuator
-    double epsilon_actuator;
-    double lr_actuator;
-    double decay_actuator;
-
-    // Gradient descent step c
-    double epsilon_sensor;
-    double lr_sensor;
-    double decay_sensor;
+    Eigen::VectorXd coeff_actuator; // global parameters: [eta, delta, alpha, beta] for manuever
+    Eigen::VectorXd coeff_sensor;  // global parameters: [sigma, omega, epsilon] for camera
 
     // synchronization variables
     double counter;
 
+    // Neural networks for power prediction
+    std::unique_ptr<MLP> actuator_mlp;
+    std::unique_ptr<MLP> sensor_mlp;
+
+    // Momentum parameters
+    Eigen::VectorXd prev_grad_actuator;
+    Eigen::VectorXd prev_grad_sensor;
+    const double momentum = 0.9;
+
+    // Moving average parameters
+    const int window_size = 5;
+    std::deque<Eigen::VectorXd> actuator_coeffs_history;
+    std::deque<Eigen::VectorXd> sensor_coeffs_history;
+
+    // Adaptive learning rate parameters
+    double prev_loss_actuator;
+    double prev_loss_sensor;
+    double learning_rate_multiplier;
+    const double lr_increase = 1.02;  // More conservative increase
+    const double lr_decrease = 0.98;  // More conservative decrease
+
     void learning();
-    double predict_actuator_power(const Eigen::Vector4d& coeff_actuator, const Eigen::VectorXd& d, double data_number);
+    double predict_actuator_power(const Eigen::VectorXd& coeff_actuator, const Eigen::VectorXd& d, double data_number);
     double predict_sensor_power(const Eigen::VectorXd& x, const Eigen::VectorXd& d, double data_number);
     void simulate_coefficient_data();
 
     SC_CTOR(Model_Learning)
         : observed_data("observed_data", 20),
           model_parameter("model_parameter", 20),
-          //coeff_actuator(0.329957,-0.45514,0.0968531,0.00146015), // initial guess [eta, delta, alpha, beta]    0.316843,0.548003,0.0973508,0.00219821 ##########
-          //coeff_actuator(0.316843,0.548003,0.0973508,0.00219821),
-          coeff_actuator(0.3182,0.2893,0.0973508,0.0973),
-          //coeff_actuator(0.3,0.2,0.1,0.1),
-          epsilon_actuator(1e-3), 
-          lr_actuator(1e-2),
-          decay_actuator(0.98),
-          epsilon_sensor(1e-4),
-          lr_sensor(1e-4),
-          decay_sensor(1),
+          prev_grad_actuator(Eigen::VectorXd::Zero(5)),
+          prev_grad_sensor(Eigen::VectorXd::Zero(6)),
+          prev_loss_actuator(std::numeric_limits<double>::max()),
+          prev_loss_sensor(std::numeric_limits<double>::max()),
+          learning_rate_multiplier(1.0),
           counter(-1)
     {
         coeff_sensor.resize(6);
+        coeff_actuator.resize(5);
         //coeff_sensor << 0.1,0.1,0.1,0.1,0.1,0.1; //##########
         //coeff_sensor << 0.928977,0.620271,0.0407869,0.00561747,0.0628375,-5.18385;
         coeff_sensor << 0.0021,0.9842,1.6427,-0.0716,0,0;
+        
+        //coeff_actuator(1.5,0.0,3.0,1.5), 
+        //coeff_actuator(-0.0716979,0.111695,0.158571,-0.0555981),
+        coeff_actuator << 1.0,0.0,1.0,-1.386937e-04 , 1.0, // eta, 0, alpha, beta, A
         SC_METHOD(learning);
         sensitive << clk.pos();
         dont_initialize();
@@ -59,7 +73,6 @@ SC_MODULE(Model_Learning) {
 };
 
 #endif
-
 
 // cfg for documentation
 //coeff_actuator(0.329957,-0.45514,0.0968531,0.00146015),

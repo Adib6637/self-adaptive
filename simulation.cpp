@@ -8,6 +8,8 @@
 extern void load_manuever_data();
 extern void load_sensor_data();
 extern void load_model_coefficient();
+extern void load_weight();
+extern void shuffle_data();
 extern int rejected_data_counter;
 extern std::vector<std::tuple<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double>> manuever_data;
 extern std::vector<std::tuple<double, double, double, double, double>> sensor_data;
@@ -52,17 +54,27 @@ int sc_main(int argc, char* argv[]) {
 
     PRINT_LOG(18, "OPTIMIZE_INTERVAL", OPTIMIZE_INTERVAL)
 
+    
+    PRINT_LOG(18, "RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX", RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MAX)
+    PRINT_LOG(18, "RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN", RESOLUTION_AREA_COVERED_PER_NUMBER_PIXEL_MIN)
+    PRINT_LOG(18, "MAX_V_CAPTURING", MAX_V_CAPTURING)
+
     PRINT_LOG_NEW_LINE
+    //PRINT_LOG(18, "load", "weights")
+    //load_weight();
+    //PRINT_LOG(18, "load", "successfull")
     if(!MANAGED_SYSTEM_ON){
-        PRINT_LOG(18, "load","coefficients dataset")
-        load_model_coefficient();
-        PRINT_LOG(18, "load","successfull")
+        //PRINT_LOG(18, "load","coefficients dataset")
+        //load_model_coefficient();
+        //PRINT_LOG(18, "load","successfull")
     }else{
         PRINT_LOG(18, "load","manuever dataset")
         load_manuever_data();
         PRINT_LOG(18, "load","sensor dataset")
         load_sensor_data();
         PRINT_LOG(18, "load","successfull")
+        //shuffle_data();
+        //shuffle_data();
     }
     std::cout << std::endl;
 
