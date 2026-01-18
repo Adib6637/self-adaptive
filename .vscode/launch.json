@@ -12,7 +12,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "${workspaceFolder}/sudo-gdb.sh", // Path to your wrapper script
+            "miDebuggerPath": "${workspaceFolder}/sudo-gdb.sh",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
