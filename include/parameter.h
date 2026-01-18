@@ -27,7 +27,7 @@
 // =============================================
 #define SIMULATION_CASE 2
 #define SIMULATION_SUB_CASE 1
-#define SIMULATION_DURATION_NS      50000
+#define SIMULATION_DURATION_NS      500000
 #define SIMULATION_CLK_TICK_NS      10
 #define AREA_DEFAULT                80*1000 
 #define OPTIMIZER_GAP               0.00000
@@ -114,8 +114,8 @@
 #elif SIMULATION_CASE == 2  // static model, dynamic weather
     #define DYNAMIC_WEATHER         true
     #define FMS_ON                  true
-    #define MODEL_LEARNER_ON        false
-    #define OPTIMIZER_ON            false //true
+    #define MODEL_LEARNER_ON        true
+    #define OPTIMIZER_ON            true
     #define FIELD_AREA              AREA_DEFAULT
     #define DRONE_SET_PIX           DRONE_SET_PIX_DEFAULT
     #define DRONE_SET_PIX_X         DRONE_SET_PIX_X_DEFAULT

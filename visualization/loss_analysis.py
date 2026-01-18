@@ -4,6 +4,8 @@ import os
 import sys
 import time
 
+evaluate = 1 # 0: actuator, 1: sensor
+
 # Enable interactive mode
 plt.ion()
 
@@ -28,7 +30,7 @@ try:
         # Read the CSV file
         file_path = '../log/log_loss.csv'
         if os.path.exists(file_path):
-            df = pd.read_csv(file_path)[:135]
+            df = pd.read_csv(file_path)[10:900]#135]
             df.columns = ['actuator', 'sensor', 'counter']
             
             # Only update if there's new data
@@ -37,14 +39,16 @@ try:
                 ax.clear()
                 
                 # Plot new data
-                ax.plot(df['actuator'], 'r-', label='Actuator Model Loss')
-                #ax.plot(df['sensor'], 'b-', label='Sensor Model Loss')
+                if evaluate == 0:
+                    ax.plot(df['actuator'], 'r-', label='Actuator Model Loss')
+                    ax.set_title('Loss value of Actuator power model')
+                else:
+                    ax.plot(df['sensor'], 'b-', label='Sensor Model Loss')
+                    ax.set_title('Loss value of Sensor power model')
 
                 # Update labels and title
                 ax.set_xlabel('Run index', fontsize=12)
                 ax.set_ylabel('Loss Value', fontsize=12)
-                ax.set_title('Loss value of Actuator power model')
-                #ax.set_title('Loss value of Sensor power model')
                 ax.legend()
                 
                 # Update display
