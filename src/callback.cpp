@@ -7,7 +7,7 @@ print_callback::print_callback(std::ofstream* xlogfile) {
 void print_callback::callback() {
 #ifdef OPTIMIZATION_TIMING_LOG
   try {
-    if (where == GRB_CB_MIPSOL){
+    if (where == GRB_CB_MESSAGE){
         runtime = getDoubleInfo(GRB_CB_RUNTIME);
         //std::cout << "Callback called at runtime: " << runtime << std::endl;
         *logfile << runtime << "\n";

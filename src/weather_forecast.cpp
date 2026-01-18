@@ -3,11 +3,7 @@
 #include <random>
 #include <fstream>
 
-//sc_in<bool> clk;
-//sc_out<double> weather_forecast[10];
-
-std::string file_name_csv = "../log/log_wind_forecast.csv"; 
-
+std::string file_name_csv = "./log/log_wind_forecast.csv"; 
 
 void Weather_Forecast::forecast() {
 

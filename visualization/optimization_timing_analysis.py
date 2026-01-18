@@ -1,15 +1,18 @@
 import pandas as pd
 import os
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
 # Set the range of rows to analyze (by index). Use None for full range.
 start = 0
 end = -1
 
 # Load the CSV file (skip the first column, use the second column 'last_runtime')
-case = 7
-sub = 4
-cat = '10/'
-test = f'c_{case}_{sub}/'
+case = 2
+sub = 1
+cat = ''
+test = ''#f'c_{case}_{sub}/'
 file_path = f'../log/{test}{cat}log_runtime_results.csv'
 df = pd.read_csv(file_path)
 

@@ -28,7 +28,7 @@ try:
         # Read the CSV file
         file_path = '../log/log_loss.csv'
         if os.path.exists(file_path):
-            df = pd.read_csv(file_path)[10:200]
+            df = pd.read_csv(file_path)[:135]
             df.columns = ['actuator', 'sensor', 'counter']
             
             # Only update if there's new data
@@ -38,11 +38,13 @@ try:
                 
                 # Plot new data
                 ax.plot(df['actuator'], 'r-', label='Actuator Model Loss')
-                
+                #ax.plot(df['sensor'], 'b-', label='Sensor Model Loss')
+
                 # Update labels and title
-                ax.set_xlabel('Iteration', fontsize=12)
+                ax.set_xlabel('Run index', fontsize=12)
                 ax.set_ylabel('Loss Value', fontsize=12)
                 ax.set_title('Loss value of Actuator power model')
+                #ax.set_title('Loss value of Sensor power model')
                 ax.legend()
                 
                 # Update display

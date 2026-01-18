@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(simulation)
 
 # SystemC configuration
-set(SYSTEMC_HOME "$ENV{SYSTEMC_HOME}" CACHE PATH "Path to SystemC installation")
+set(SYSTEMC_HOME "/mnt/d/Lib/systemc/install" CACHE PATH "Path to SystemC installation")
 if(NOT SYSTEMC_HOME OR SYSTEMC_HOME STREQUAL "")
     message(FATAL_ERROR "SYSTEMC_HOME is not set. Please set it via -DSYSTEMC_HOME=... or export SYSTEMC_HOME=...")
 endif()
@@ -15,7 +15,7 @@ else()
 endif()
 
 # Gurobi configuration
-set(GUROBI_HOME "$ENV{GUROBI_HOME}" CACHE PATH "Path to Gurobi installation")
+set(GUROBI_HOME "/opt/gurobi1300/linux64" CACHE PATH "Path to Gurobi installation")
 if(NOT GUROBI_HOME OR GUROBI_HOME STREQUAL "")
     message(FATAL_ERROR "GUROBI_HOME is not set. Please set it via -DGUROBI_HOME=... or export GUROBI_HOME=...")
 endif()
@@ -23,7 +23,7 @@ set(GUROBI_INCLUDE_DIRS ${GUROBI_HOME}/include)
 set(GUROBI_LIBRARY_DIR ${GUROBI_HOME}/lib)
 set(GUROBI_LIBRARIES
     ${GUROBI_LIBRARY_DIR}/libgurobi_c++.a
-    ${GUROBI_LIBRARY_DIR}/libgurobi120.so
+    ${GUROBI_LIBRARY_DIR}/libgurobi130.so
 )
 
 # Eigen

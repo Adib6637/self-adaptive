@@ -8,16 +8,17 @@
 using namespace sc_core;
 
 SC_MODULE(Monitor) {
+    // main clk
     sc_in<bool> clk;
-    sc_core::sc_vector<sc_in<double>> managed_system_data;
-    sc_core::sc_vector<sc_in<double>> new_cfg;
+
+    // module interface
+    sc_core::sc_vector<sc_in<double>> fms_data;
     sc_core::sc_vector<sc_out<double>> observed_data;
 
     void monitor();
 
     SC_CTOR(Monitor)
-        : managed_system_data("managed_system_data", 20),
-          new_cfg("new_cfg", 20),
+        : fms_data("fms_data", 20),
           observed_data("observed_data", 20)
     {
         SC_METHOD(monitor);

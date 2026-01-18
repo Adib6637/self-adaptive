@@ -4,314 +4,167 @@
 #include <fstream>
 #include <ctime>
 #include <chrono>
-#include <iomanip>
-#include "mlp.h"
 
+// function prototype
 void log_loss_to_csv(double maneuver_loss, double sensor_loss, double data_number);
-void log_coefficient_actuator( double eta, double delta, double alpha, double beta, double data_number);
+void log_coefficient_actuator( const Eigen::VectorXd& x, double data_number);
 void log_coefficient_sensor( const Eigen::VectorXd& x, double data_number);
 void log_A_B_C( double A, double B, double C, double data_number);
-
 void load_model_coefficient();
-void load_weight(); 
+Eigen::VectorXd compute_gradient_actuator(
+    const Eigen::VectorXd& x,
+    const Eigen::VectorXd& d,
+    double data_number);
 
+// offline coefficient data: to test without monitor sub module
 std::vector<std::tuple<double, double, double, double, double, double, double, double, double, double>> coefficient_data;
-std::string model_coefficient_data_file = "../dataset/model_parameter_set/model_coefficient_test_set.csv";
+std::string model_coefficient_data_file = "./dataset/model_parameter_set/model_coefficient_test_set.csv";
 
-
+// learning process
 void Model_Learning::learning() {
-    if (!MODEL_LEARNER_ON || observed_data[19].read() == 0 || counter == observed_data[19].read()) return; 
+    // condition to proceed oterwise skip
+    if (!MODEL_LEARNER_ON){
+        for (int i = 0; i < coeff_actuator_size; ++i){
+            model_parameter[i].write(coeff_actuator(i)); // eta, delta, alpha, beta
+        }    
+        for (int i = 4; i < coeff_actuator_size + coeff_sensor_size; ++i){
+            model_parameter[i].write(coeff_sensor(i-coeff_actuator_size)); // a, b, c
+        }
+    }
+    if (observed_data[19].read() == 0 || counter == observed_data[19].read()) return; 
     counter = observed_data[19].read();
-    
-    if (!MANAGED_SYSTEM_ON) {
+    if (!FMS_ON) {
         simulate_coefficient_data();
         return;
     }
 
-    //static int counter_limit_check = 0;
-    //if(counter_limit_check > 5)return;
-    //std::cout << "counter: " << counter << ", data(altitude): " << (observed_data[2].read()-0.0917)* (ALTITUDE_MAX - ALTITUDE_MIN) + ALTITUDE_MIN << std::endl;
-    //counter_limit_check++;
-    
-
-    // Initialize nn with more balanced architectures
-    if (!actuator_mlp) {
-        std::vector<int> actuator_layers = {8, 32, 64, 32, 5}; // More balanced architecture
-        actuator_mlp = std::make_unique<MLP>(actuator_layers, 0.001); // Increased learning rate
-        actuator_mlp->load_weights("../weight/actuator_nn_weights.csv");
-    }
-    if (!sensor_mlp) {
-        std::vector<int> sensor_layers = {2, 16, 32, 16, 6}; // More balanced architecture
-        sensor_mlp = std::make_unique<MLP>(sensor_layers, 0.001); // Normalized learning rate
-        sensor_mlp->load_weights("../weight/sensor_nn_weights.csv");
-    }
-
-    // observed data
-    double acceleration_z_normalized = observed_data[0].read(); // Normalized acceleration z
+    // ############################################ Data Preprocessing ##############################################################
+    // Data Preprocessing
+    double acceleration_z_normalized = observed_data[0].read();                 // Normalized acceleration z
     double mass_d_normalized = (DRONE_MASS - MASS_MIN) / (MASS_MAX - MASS_MIN); // Drone mass
-    double mass_p_normalized = observed_data[1].read(); // Payload mass
-    double altitude_normalized = observed_data[2].read()-0.0917; // Altitude
-    double wind_speed_normalized = observed_data[3].read(); // Wind speed
-    double wind_angle = observed_data[4].read(); // Wind angle
-    double speed_normalized = observed_data[5].read(); // Speed of drone
-    double power_actuator_normalized = observed_data[6].read(); // Power actuator
-    double power_actuator= (observed_data[6].read()* (POWER_ACTUATOR_MAX - POWER_ACTUATOR_MIN)) + POWER_ACTUATOR_MIN; // Adjust power actuator to the range of power actuator
+    double mass_p_normalized = observed_data[1].read();                         // Payload mass
+    double altitude_normalized = observed_data[2].read()-0.0917;                // Altitude
+    double wind_speed_normalized = observed_data[3].read();                     // Wind speed
+    double wind_angle = observed_data[4].read();                                // Wind angle
+    double speed_normalized = observed_data[5].read();                          // Speed of drone
+    double power_actuator_normalized = observed_data[6].read();                 // Power actuator
+    double power_actuator= (
+        observed_data[6].read()* (
+            POWER_ACTUATOR_MAX - POWER_ACTUATOR_MIN)) + POWER_ACTUATOR_MIN;     // Adjust power actuator to the range of power actuator
+    double fps_normalized = observed_data[7].read();                            // Normalized fps
+    double pix_normalized = observed_data[8].read();                            // Normalized pixels 
+    double pix_x_normalized = observed_data[10].read();                         // Normalized pixel x
+    double pix_y_normalized = observed_data[11].read();                         // Normalized pixel y
+    double power_sensor_normalized = observed_data[9].read();                   // Normalized power sensor
 
-    double fps_normalized = observed_data[7].read(); // Normalized fps
-    double pix_normalized = observed_data[8].read(); // Normalized pixels 
-    double pix_x_normalized = observed_data[10].read(); // Normalized pixel x
-    double pix_y_normalized = observed_data[11].read(); // Normalized pixel y
-    double power_sensor_normalized = observed_data[9].read(); // Normalized power sensor
-
-    // ############################################################################# Actuator Power Model Update #############################################################################
-
+    // ########################################## Actuator Power Model Update #########################################################
     Eigen::VectorXd actuator_input(8);
-    actuator_input(0) = acceleration_z_normalized; // Normalized linear acceleration z
-    actuator_input(1) = mass_d_normalized; // m_d
-    actuator_input(2) = mass_p_normalized; // m_p
-    actuator_input(3) = altitude_normalized-0.0917; // h
-    actuator_input(4) = (H_REF-ALTITUDE_MIN)/(ALTITUDE_MAX-ALTITUDE_MIN); // h_ref
-    actuator_input(5) = wind_speed_normalized; // v_wind
-    actuator_input(6) = wind_angle; // theta_wind
-    actuator_input(7) = speed_normalized; // v_i
-
-    double power_actuator_measured = power_actuator_normalized; // Ground truth power consumption
+    actuator_input(0) = acceleration_z_normalized;                              // Normalized linear acceleration z
+    actuator_input(1) = mass_d_normalized;                                      // m_d
+    actuator_input(2) = mass_p_normalized;                                      // m_p
+    actuator_input(3) = altitude_normalized-0.0917;                             // h
+    actuator_input(4) = (H_REF-ALTITUDE_MIN)/(ALTITUDE_MAX-ALTITUDE_MIN);       // h_ref
+    actuator_input(5) = wind_speed_normalized;                                  // v_windf
+    actuator_input(6) = wind_angle;                                             // theta_wind
+    actuator_input(7) = speed_normalized;                                       // v_i
+    double power_actuator_measured = power_actuator_normalized;                 // Ground truth power consumption
 
 #ifdef LEARNING_TIMING_LOG
     auto learning_start = std::chrono::steady_clock::now();
 #endif
-
-    // Get predicted coefficients from neural network
-    Eigen::VectorXd pred_coeffs_actuator = actuator_mlp->forward_vector(actuator_input);
     
-    // Use predicted coefficients to calculate predicted power
-    double power_actuator_pred = predict_actuator_power(pred_coeffs_actuator, actuator_input, observed_data[19].read());
-    const double l2_lambda = 0.01; // L2 regularization strength
-    double l2_reg = 0.0;
-
-
-    for(int i = 0; i < 4; ++i) {
-        l2_reg += std::pow(pred_coeffs_actuator(i), 2);
+    // compute gradient
+    Eigen::VectorXd grad_actuator = compute_gradient_actuator(coeff_actuator, actuator_input, observed_data[19].read());
+    // Compute loss
+    double power_actuator_pred = predict_actuator_power(coeff_actuator, actuator_input, observed_data[19].read());
+    // Gradient descent update
+    Eigen::VectorXd update_actuator = lr_actuator * (power_actuator_pred - power_actuator_measured) * grad_actuator;
+    // Apply learning rate decay
+    lr_actuator *= decay_actuator;
+    // Update coefficients
+    coeff_actuator -= update_actuator;
+    // Write updated parameters
+    for (int i = 0; i < coeff_actuator_size; ++i) {
+        model_parameter[i].write(coeff_actuator(i));
     }
-    double loss_actuator = 0.5 * std::pow(power_actuator_pred - power_actuator_measured, 2) ;
-
-    // Log high error cases //////////////////////////////////////////////////////////////////////////////////////////////
-    if (loss_actuator > 0.05) {
-        std::ofstream error_file("../log/log_high_error_counters.csv", std::ios::app);
-        if (error_file.is_open()) {
-            error_file << counter << "," << loss_actuator << std::endl;
-            error_file.close();
-        }
-    }
-
-    // Calculate gradient for each coefficient using finite differences
-    Eigen::VectorXd grad_actuator = Eigen::VectorXd::Zero(5);
-    double error_actuator = power_actuator_pred - power_actuator_measured;
-    double epsilon_actuator = 1e-6;
-
-    for (int i = 0; i < 4; ++i) {
-        // Compute partial derivative for each coefficient
-        Eigen::VectorXd coeffs_plus = pred_coeffs_actuator;
-        Eigen::VectorXd coeffs_minus = pred_coeffs_actuator;
-        coeffs_plus(i) += epsilon_actuator;
-        coeffs_minus(i) -= epsilon_actuator;
-
-        double power_plus = predict_actuator_power(coeffs_plus, actuator_input, observed_data[19].read());
-        double power_minus = predict_actuator_power(coeffs_minus, actuator_input, observed_data[19].read());
-        
-        // Compute gradient using central difference
-        grad_actuator(i) = error_actuator * (power_plus - power_minus) / (2 * epsilon_actuator);
-    }
+    double loss_actuator = 0.5 * std::pow(power_actuator_pred - power_actuator_measured, 2);
     
-    // Clip gradients to prevent explosion
-    double grad_norm_actuator = grad_actuator.norm();
-    if (grad_norm_actuator > 0.5) {  // More aggressive clipping
-        grad_actuator *= 0.5 / grad_norm_actuator;
-    }
-    
-    // Apply momentum
-    //grad_actuator = momentum * prev_grad_actuator + (1 - momentum) * grad_actuator;
-    //prev_grad_actuator = grad_actuator;
-
-    // Adjust learning rate based on loss change
-    //if (loss_actuator < prev_loss_actuator) {
-    //    learning_rate_multiplier *= lr_increase;
-    //} else {
-    //    learning_rate_multiplier *= lr_decrease;
-    //}
-    //learning_rate_multiplier = std::min(std::max(learning_rate_multiplier, 0.1), 2.0);
-    //actuator_mlp->set_learning_rate(0.001 * learning_rate_multiplier);
-    
-    // Backward pass with the gradient
-    actuator_mlp->backward_with_gradient(grad_actuator);
-
-    if (std::isnan(loss_actuator)) return;
-
-    // Store coefficients history for moving average
-    //actuator_coeffs_history.push_back(pred_coeffs_actuator);
-    //if (actuator_coeffs_history.size() > window_size) {
-    //    actuator_coeffs_history.pop_front();
-    //}
-    
-    // Calculate moving average
-    //Eigen::VectorXd avg_coeffs = Eigen::VectorXd::Zero(4);
-    //for (const auto& coeffs : actuator_coeffs_history) {
-    //    avg_coeffs += coeffs;
-    //}
-    //avg_coeffs /= actuator_coeffs_history.size();
-    
-    // Update coefficient values with smoothed predictions
-    //C = avg_coeffs;
-    coeff_actuator = pred_coeffs_actuator;
-    
-    //prev_loss_actuator = loss_actuator;
-
-    //std::cout << "error: " << power_actuator_pred - power_actuator_measured << std::endl;
-    //std::cout << "power_actuator_pred: " << power_actuator_pred << std::endl;
-    //std::cout << "power_actuator_measured: " << power_actuator_measured << std::endl;
-    // ############################################################################# Sensor Power Model Update #############################################################################
+    // ########################################## Sensor Power Model Update #########################################################
+    // Prepare input
     Eigen::VectorXd sensor_input(2);
-    sensor_input(0) = fps_normalized; // Normalized fps
-    sensor_input(1) = pix_normalized; // Normalized pixels
-
+    sensor_input(0) = fps_normalized;                                           // Normalized fps
+    sensor_input(1) = pix_normalized;                                           // Normalized pixels
     double power_sensor_measured = power_sensor_normalized;
-    
-    // Get predicted coefficients from neural network
-    Eigen::VectorXd pred_coeffs_sensor = sensor_mlp->forward_vector(sensor_input);
-    
-    // Use predicted coefficients to calculate predicted power
-    double power_sensor_pred = predict_sensor_power(pred_coeffs_sensor, sensor_input, observed_data[19].read());
+
+    // Predict power with current coefficients
+    double power_sensor_pred = predict_sensor_power(coeff_sensor, sensor_input, observed_data[19].read());
+    // Compute gradient
+    Eigen::VectorXd grad_sensor(4);
+    grad_sensor(0) = sensor_input(0);                                           // ∂P/∂x0 = fps
+    grad_sensor(1) = sensor_input(1);                                           // ∂P/∂x1 = pix
+    grad_sensor(2) = 1.0;                                                       // ∂P/∂x2 = bias term
+    grad_sensor(3) = 0.0;                                                       // reserved
+    // Gradient descent update
+    Eigen::VectorXd update_sensor = lr_sensor * (power_sensor_pred - power_sensor_measured) * grad_sensor;
+    // Learning rate decay
+    lr_sensor *= decay_sensor;
+    // Update coefficients
+    coeff_sensor -= update_sensor;
+    // Write updated parameters 
+    for (int i = 4; i < coeff_actuator_size + coeff_sensor_size; ++i) {
+        model_parameter[i].write(coeff_sensor(i - coeff_actuator_size));        // a, b, c
+    }
     double loss_sensor = 0.5 * std::pow(power_sensor_pred - power_sensor_measured, 2);
 
-/////////////////    if loss greather than xxxx print data -> remive data s
-
-    // Calculate gradient for each coefficient using finite differences
-    Eigen::VectorXd grad_sensor = Eigen::VectorXd::Zero(6);
-    double error_sensor = power_sensor_pred - power_sensor_measured;
-    double epsilon_sensor = 1e-6;
-
-    for (int i = 0; i < 6; ++i) {
-        // Compute partial derivative for each coefficient
-        Eigen::VectorXd coeffs_plus = pred_coeffs_sensor;
-        Eigen::VectorXd coeffs_minus = pred_coeffs_sensor;
-        coeffs_plus(i) += epsilon_sensor;
-        coeffs_minus(i) -= epsilon_sensor;
-
-        double power_plus = predict_sensor_power(coeffs_plus, sensor_input, observed_data[19].read());
-        double power_minus = predict_sensor_power(coeffs_minus, sensor_input, observed_data[19].read());
-        
-        // Compute gradient using central difference
-        grad_sensor(i) = error_sensor * (power_plus - power_minus) / (2 * epsilon_sensor);
-    }
-    
-    // Clip gradients to prevent explosion
-    double grad_norm_sensor = grad_sensor.norm();
-    if (grad_norm_sensor > 1.0) {
-        grad_sensor *= 1.0 / grad_norm_sensor;
-    }
-    
-    // Apply momentum
-    //grad_sensor = momentum * prev_grad_sensor + (1 - momentum) * grad_sensor;
-    //prev_grad_sensor = grad_sensor;
-
-    // Adjust learning rate based on loss change
-    //if (loss_sensor < prev_loss_sensor) {
-    //    learning_rate_multiplier *= lr_increase;
-    //} else {
-    //    learning_rate_multiplier *= lr_decrease;
-    //}
-    //learning_rate_multiplier = std::min(std::max(learning_rate_multiplier, 0.1), 2.0);
-    //sensor_mlp->set_learning_rate(0.001 * learning_rate_multiplier);
-    
-    // Backward pass with the gradient
-    sensor_mlp->backward_with_gradient(grad_sensor);
-
-    if (std::isnan(loss_sensor)) return;
-
-    // Store coefficients history for moving average
-    //sensor_coeffs_history.push_back(pred_coeffs_sensor);
-    //if (sensor_coeffs_history.size() > window_size) {
-    //    sensor_coeffs_history.pop_front();
-    //}
-    
-    // Calculate moving average
-    //Eigen::VectorXd avg_coeffs_sensor = Eigen::VectorXd::Zero(6);
-    //for (const auto& coeffs : sensor_coeffs_history) {
-    //    avg_coeffs_sensor += coeffs;
-    //}
-    //avg_coeffs_sensor /= sensor_coeffs_history.size();
-    
-    // Update coefficient values with smoothed predictions
-    //coeff_sensor = avg_coeffs_sensor;
-    coeff_sensor = pred_coeffs_sensor;
-
-    //prev_loss_sensor = loss_sensor;
-    
 #ifdef LEARNING_TIMING_LOG
     auto learning_end = std::chrono::steady_clock::now();
     std::chrono::duration<double> learning_duration = learning_end - learning_start;
-    std::ofstream timefile("../log/log_learning_time.csv", std::ios::app);
+    std::ofstream timefile("./log/log_learning_time.csv", std::ios::app);
     if (timefile.is_open()) {
         timefile << learning_duration.count() << "," << observed_data[19].read() << std::endl;
         timefile.close();
     }
 #endif 
-
-    // #################################################################################### Update Model ####################################################################################
-
-    // Save neural network weights
-    actuator_mlp->save_weights("../weight/actuator_nn_weights.csv");
-    sensor_mlp->save_weights("../weight/sensor_nn_weights.csv");
-
-    // Update model parameters with the predicted coefficients
-    for (int i = 0; i < 4; ++i){
-        model_parameter[i].write(coeff_actuator(i));
-    }
-    for (int i = 4; i < 10; ++i){
-        model_parameter[i].write(coeff_sensor(i-4));
-    }
-
 #ifdef LEARNING_PROGRESS_LOG
     log_coefficient_sensor(coeff_sensor, observed_data[19].read());
-    log_coefficient_actuator(coeff_actuator(0), coeff_actuator(1), coeff_actuator(2), coeff_actuator(3), observed_data[19].read());
+    log_coefficient_actuator(coeff_actuator, observed_data[19].read());
     log_loss_to_csv(loss_actuator, loss_sensor, observed_data[19].read()); // maneuver_loss, sensor_loss, data_number
 #endif
 }
 
+
+// helper function
+// - predict actuator power consumption
 double Model_Learning::predict_actuator_power(const Eigen::VectorXd& x, const Eigen::VectorXd& d, double data_number) {
-    double g_ = d(0)*(LINEAR_ACCELERATION_Z_MAX-LINEAR_ACCELERATION_Z_MIN) + LINEAR_ACCELERATION_Z_MIN; // Adjust g to the range of linear acceleration z
-    double m_d_ = d(1) * (MASS_MAX - MASS_MIN) + MASS_MIN; // Adjust m_d to the range of drone mass
-    double m_p_ = d(2) * (MASS_MAX - MASS_MIN) + MASS_MIN; // Adjust m_p to the range of payload mass
-    double h_ = d(3) * (ALTITUDE_MAX - ALTITUDE_MIN) + ALTITUDE_MIN; // Adjust h to the range of altitude
-    double h_ref_ = H_REF; // Adjust h_ref to the range of altitude
-    double v_wind_ = d(5) * (WIND_SPEED_MAX - WIND_SPEED_MIN) + WIND_SPEED_MIN; // Adjust v_wind to the range of wind speed
-    double theta_wind_ = d(6) * (WIND_ANGLE_MAX - WIND_ANGLE_MIN) + WIND_ANGLE_MIN; // Adjust theta_wind to the range of wind angle
-    double v_i_ = d(7) * (SPEED_MAX - SPEED_MIN) + SPEED_MIN; // Adjust v_i to the range of speed
+    // parameter preparation
+    double g = d(0)*(
+        LINEAR_ACCELERATION_Z_MAX-LINEAR_ACCELERATION_Z_MIN) + LINEAR_ACCELERATION_Z_MIN;   // Adjust g to the range of linear acceleration z
+    double m_d = d(1) * (MASS_MAX - MASS_MIN) + MASS_MIN;                                   // Adjust m_d to the range of drone mass
+    double m_p = d(2) * (MASS_MAX - MASS_MIN) + MASS_MIN;                                   // Adjust m_p to the range of payload mass
+    double h = d(3) * (ALTITUDE_MAX - ALTITUDE_MIN) + ALTITUDE_MIN;                         // Adjust h to the range of altitude
+    double h_ref = H_REF;                                                                   // Adjust h_ref to the range of altitude
+    double v_wind = d(5) * (WIND_SPEED_MAX - WIND_SPEED_MIN) + WIND_SPEED_MIN;              // Adjust v_wind to the range of wind speed
+    double theta_wind = d(6) * (WIND_ANGLE_MAX - WIND_ANGLE_MIN) + WIND_ANGLE_MIN;          // Adjust theta_wind to the range of wind angle
+    double v_i = d(7) * (SPEED_MAX - SPEED_MIN) + SPEED_MIN;                                // Adjust v_i to the range of speed
+    double mass_sum = m_d + m_p;
+    double sin_th = std::sin(theta_wind);
 
-    double mass_sum_ = m_d_ + m_p_;
-    double mass_sum = d(1) + d  (2);
-    double cos_th_ = std::cos(theta_wind_);
-    double sin_th_ = std::sin(theta_wind_);
-
-    double A_ = g_*(mass_sum_)*(v_wind_*sin_th_+v_i_); 
-    double A = d(0)*mass_sum*(d(5)*sin_th_+d(7)); 
-    double B_ = std::pow((v_wind_*sin_th_+v_i_),3); 
-    double B = std::pow((d(5)*sin_th_+d(7)),3); 
-    double C_ = (h_/h_ref_)*(mass_sum_); 
-    double C = (h_/H_REF)*(mass_sum);
-
-    double nominator_ = x(4)*A_ + x(2)*B_ + x(3)*C_; 
-    double nominator = x(4)*A + x(2)*B + x(3)*C;
-    double denominator_ = x(0); 
-    double denominator = x(0);
+    // fold constant
+    double A = g*(mass_sum)*(v_wind*sin_th+v_i); 
+    double B = std::pow((v_wind*sin_th+v_i),3); 
+    double C = (h/h_ref)*(mass_sum); 
+    
+    // compute power
+    double nominator = A + x(0)*B + x(1)*C + x(3); 
+    double denominator = x(2); 
 #ifdef LEARNING_PROGRESS_LOG
-    log_A_B_C(A_, B_, C_, data_number); // Log the adjusted values
+    log_A_B_C(A, B, C, data_number);
 #endif
-    return ((nominator_ / (denominator_ + 1e-8)) - POWER_ACTUATOR_MIN) / (POWER_ACTUATOR_MAX - POWER_ACTUATOR_MIN);
-    //return nominator / (denominator_ + 1e-8);
+    return (((nominator / (denominator + 1e-8))) - POWER_ACTUATOR_MIN) / (POWER_ACTUATOR_MAX - POWER_ACTUATOR_MIN);
 
 }
 
+// - predict sensor power consumption
 double Model_Learning::predict_sensor_power(const Eigen::VectorXd& x, const Eigen::VectorXd& d, double data_number) {
     double fps = d(0);
     double pix = d(1);
@@ -320,41 +173,44 @@ double Model_Learning::predict_sensor_power(const Eigen::VectorXd& x, const Eige
     return pred_power;
 }
 
+// - log loss value
 void log_loss_to_csv(double maneuver_loss, double sensor_loss, double data_number) {
-    std::ofstream file("../log/log_loss.csv", std::ios::app); // Open in append mode
+    std::ofstream file("./log/log_loss.csv", std::ios::app); // Open in append mode
     if (file.is_open()) {
         file << maneuver_loss << "," << sensor_loss <<"," << data_number << std::endl;
         file.close();
     }
 }
 
-void log_coefficient_actuator( double eta, double delta, double alpha, double beta, double data_number) {
-    std::ofstream file("../log/log_coefficient_actuator.csv", std::ios::app); // Open in append mode
-    if (file.is_open()) {
-        file <<  eta << "," 
-             << delta << "," 
-             << alpha << "," 
-             << beta <<"," << data_number << std::endl;
-        file.close();
-    }
-}
-
-void log_coefficient_sensor( const Eigen::VectorXd& x, double data_number) {
-    std::ofstream file("../log/log_coefficient_sensor.csv", std::ios::app); // Open in append mode
+// - log actuator models coefficient
+void log_coefficient_actuator( const Eigen::VectorXd& x, double data_number) {
+    std::ofstream file("./log/log_coefficient_actuator.csv", std::ios::app); // Open in append mode
     if (file.is_open()) {
         file <<  x(0) << "," 
              << x(1) << "," 
              << x(2) << "," 
              << x(3) << "," 
-             << x(4) << "," 
-             << x(5) << "," 
              << data_number << std::endl;
         file.close();
     }
 }
 
+// - log sensor models coefficient
+void log_coefficient_sensor( const Eigen::VectorXd& x, double data_number) {
+    std::ofstream file("./log/log_coefficient_sensor.csv", std::ios::app); // Open in append mode
+    if (file.is_open()) {
+        file <<  x(0) << "," 
+             << x(1) << "," 
+             << x(2) << "," 
+             << x(3) << "," 
+             << data_number << std::endl;
+        file.close();
+    }
+}
+
+// - log sensor const folding result
 void log_A_B_C( double A, double B, double C, double data_number) {
-    std::ofstream file("../log/log_A_B_C.csv", std::ios::app); // Open in append mode
+    std::ofstream file("./log/log_A_B_C.csv", std::ios::app); // Open in append mode
     if (file.is_open()) {
         file <<  A << "," 
              << B << "," 
@@ -448,20 +304,47 @@ void Model_Learning::simulate_coefficient_data(){
     }
 }
 
-void load_weight() {
-    //std::ifstream actuator_file("../weight/actuator_nn_weights.csv");
-    //if (actuator_file.good()) {
-    //    actuator_nn.load_weights("../weight/actuator_nn_weights.csv");
-    //} else {
-    //    std::cerr << "Warning: Could not open ../weight/actuator_nn_weights.csv. Using default weights." << std::endl;
-    //}
-    //actuator_file.close();
+Eigen::VectorXd compute_gradient_actuator(
+    const Eigen::VectorXd& x,
+    const Eigen::VectorXd& d,
+    double data_number)
+{
+    // parameter preparation
+    Eigen::VectorXd grad(4);
+    double g = d(0)*(
+        LINEAR_ACCELERATION_Z_MAX-LINEAR_ACCELERATION_Z_MIN) + LINEAR_ACCELERATION_Z_MIN;
+    double m_d = d(1)*(MASS_MAX - MASS_MIN) + MASS_MIN;
+    double m_p = d(2)*(MASS_MAX - MASS_MIN) + MASS_MIN;
+    double h = d(3)*(ALTITUDE_MAX - ALTITUDE_MIN) + ALTITUDE_MIN;
+    double h_ref = H_REF;
+    double v_wind = d(5)*(WIND_SPEED_MAX - WIND_SPEED_MIN) + WIND_SPEED_MIN;
+    double theta_wind = d(6)*(WIND_ANGLE_MAX - WIND_ANGLE_MIN) + WIND_ANGLE_MIN;
+    double v_i = d(7)*(SPEED_MAX - SPEED_MIN) + SPEED_MIN;
+    double mass_sum = m_d + m_p;
+    double sin_th = std::sin(theta_wind);
 
-    //std::ifstream sensor_file("../weight/sensor_nn_weights.csv");
-    //if (sensor_file.good()) {
-    //    sensor_nn.load_weights("../weight/sensor_nn_weights.csv");
-    //} else {
-    //    std::cerr << "Warning: Could not open ../weight/sensor_nn_weights.csv. Using default weights." << std::endl;
-    //}
-    //sensor_file.close();
+    // fold constant
+    double A = g * (mass_sum) * (v_wind * sin_th + v_i);
+    double B = std::pow((v_wind * sin_th + v_i), 3);
+    double C = (h / h_ref) * (mass_sum);
+
+    // compute power
+    double numerator = A + x(0)*B + x(1)*C + x(3);
+    double denominator = x(2) + 1e-8;
+    double scale = 1.0 / (POWER_ACTUATOR_MAX - POWER_ACTUATOR_MIN);
+
+    // // Analytical partial derivatives
+    // grad(0) = (-numerator / (denominator * denominator)) * scale;   // ∂P/∂x0
+    // grad(1) = (B / denominator) * scale;                            // ∂P/∂x1
+    // grad(2) = (C / denominator) * scale;                            // ∂P/∂x2
+    // grad(3) = (A / denominator) * scale;                            // ∂P/∂x3
+
+    // Analytical partial derivatives
+    grad(0) = (B / denominator) * scale;                            // ∂P/∂x0
+    grad(1) = (C / denominator) * scale;                            // ∂P/∂x1
+    grad(2) = (-numerator / (denominator * denominator)) * scale;   // ∂P/∂x2
+    grad(3) = (1.0 / denominator) * scale;                          // ∂P/∂x3
+
+    return grad;
 }
+     

@@ -17,6 +17,6 @@ if [[ -z "$GUROBI_HOME" ]]; then
     exit 1
 fi
 
-cmake .. -DSYSTEMC_HOME=$SYSTEMC_HOME -DGUROBI_HOME=$GUROBI_HOME
+sudo -E cmake .. -DCMAKE_BUILD_TYPE=Debug -DSYSTEMC_HOME=$SYSTEMC_HOME -DGUROBI_HOME=$GUROBI_HOME
 cd ..
 ./run.sh

@@ -11,7 +11,6 @@ SC_MODULE(Optimizer) {
     sc_in<bool> clk;
 
     sc_core::sc_vector<sc_in<double>> model_parameter;
-    sc_core::sc_vector<sc_in<double>> constraints_value;
     sc_core::sc_vector<sc_in<double>> weather_prediction;
     sc_core::sc_vector<sc_in<double>> observed_data;
 
@@ -24,7 +23,6 @@ SC_MODULE(Optimizer) {
 
     SC_CTOR(Optimizer)
         : model_parameter("model_parameter", 20),
-          constraints_value("constraints_value", 20),
           weather_prediction("weather_prediction", 20),
           observed_data("observed_data", 20),
           cfg("cfg", 20),

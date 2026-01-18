@@ -153,6 +153,30 @@ simulation.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/simulation.cpp.s
 .PHONY : simulation.cpp.s
 
+src/FMS.o: src/FMS.cpp.o
+.PHONY : src/FMS.o
+
+# target to build an object file
+src/FMS.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/FMS.cpp.o
+.PHONY : src/FMS.cpp.o
+
+src/FMS.i: src/FMS.cpp.i
+.PHONY : src/FMS.i
+
+# target to preprocess a source file
+src/FMS.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/FMS.cpp.i
+.PHONY : src/FMS.cpp.i
+
+src/FMS.s: src/FMS.cpp.s
+.PHONY : src/FMS.s
+
+# target to generate assembly for a file
+src/FMS.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/FMS.cpp.s
+.PHONY : src/FMS.cpp.s
+
 src/callback.o: src/callback.cpp.o
 .PHONY : src/callback.o
 
@@ -177,101 +201,53 @@ src/callback.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/callback.cpp.s
 .PHONY : src/callback.cpp.s
 
-src/constraint_tuner.o: src/constraint_tuner.cpp.o
-.PHONY : src/constraint_tuner.o
+src/cognitive.o: src/cognitive.cpp.o
+.PHONY : src/cognitive.o
 
 # target to build an object file
-src/constraint_tuner.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/constraint_tuner.cpp.o
-.PHONY : src/constraint_tuner.cpp.o
+src/cognitive.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/cognitive.cpp.o
+.PHONY : src/cognitive.cpp.o
 
-src/constraint_tuner.i: src/constraint_tuner.cpp.i
-.PHONY : src/constraint_tuner.i
+src/cognitive.i: src/cognitive.cpp.i
+.PHONY : src/cognitive.i
 
 # target to preprocess a source file
-src/constraint_tuner.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/constraint_tuner.cpp.i
-.PHONY : src/constraint_tuner.cpp.i
+src/cognitive.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/cognitive.cpp.i
+.PHONY : src/cognitive.cpp.i
 
-src/constraint_tuner.s: src/constraint_tuner.cpp.s
-.PHONY : src/constraint_tuner.s
+src/cognitive.s: src/cognitive.cpp.s
+.PHONY : src/cognitive.s
 
 # target to generate assembly for a file
-src/constraint_tuner.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/constraint_tuner.cpp.s
-.PHONY : src/constraint_tuner.cpp.s
+src/cognitive.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/cognitive.cpp.s
+.PHONY : src/cognitive.cpp.s
 
-src/managed_system.o: src/managed_system.cpp.o
-.PHONY : src/managed_system.o
+src/math_.o: src/math_.cpp.o
+.PHONY : src/math_.o
 
 # target to build an object file
-src/managed_system.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/managed_system.cpp.o
-.PHONY : src/managed_system.cpp.o
+src/math_.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/math_.cpp.o
+.PHONY : src/math_.cpp.o
 
-src/managed_system.i: src/managed_system.cpp.i
-.PHONY : src/managed_system.i
-
-# target to preprocess a source file
-src/managed_system.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/managed_system.cpp.i
-.PHONY : src/managed_system.cpp.i
-
-src/managed_system.s: src/managed_system.cpp.s
-.PHONY : src/managed_system.s
-
-# target to generate assembly for a file
-src/managed_system.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/managed_system.cpp.s
-.PHONY : src/managed_system.cpp.s
-
-src/managed_system_helper_function.o: src/managed_system_helper_function.cpp.o
-.PHONY : src/managed_system_helper_function.o
-
-# target to build an object file
-src/managed_system_helper_function.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/managed_system_helper_function.cpp.o
-.PHONY : src/managed_system_helper_function.cpp.o
-
-src/managed_system_helper_function.i: src/managed_system_helper_function.cpp.i
-.PHONY : src/managed_system_helper_function.i
+src/math_.i: src/math_.cpp.i
+.PHONY : src/math_.i
 
 # target to preprocess a source file
-src/managed_system_helper_function.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/managed_system_helper_function.cpp.i
-.PHONY : src/managed_system_helper_function.cpp.i
+src/math_.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/math_.cpp.i
+.PHONY : src/math_.cpp.i
 
-src/managed_system_helper_function.s: src/managed_system_helper_function.cpp.s
-.PHONY : src/managed_system_helper_function.s
-
-# target to generate assembly for a file
-src/managed_system_helper_function.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/managed_system_helper_function.cpp.s
-.PHONY : src/managed_system_helper_function.cpp.s
-
-src/mlp.o: src/mlp.cpp.o
-.PHONY : src/mlp.o
-
-# target to build an object file
-src/mlp.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/mlp.cpp.o
-.PHONY : src/mlp.cpp.o
-
-src/mlp.i: src/mlp.cpp.i
-.PHONY : src/mlp.i
-
-# target to preprocess a source file
-src/mlp.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/mlp.cpp.i
-.PHONY : src/mlp.cpp.i
-
-src/mlp.s: src/mlp.cpp.s
-.PHONY : src/mlp.s
+src/math_.s: src/math_.cpp.s
+.PHONY : src/math_.s
 
 # target to generate assembly for a file
-src/mlp.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/mlp.cpp.s
-.PHONY : src/mlp.cpp.s
+src/math_.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/math_.cpp.s
+.PHONY : src/math_.cpp.s
 
 src/model_learning.o: src/model_learning.cpp.o
 .PHONY : src/model_learning.o
@@ -345,30 +321,6 @@ src/optimizer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/optimizer.cpp.s
 .PHONY : src/optimizer.cpp.s
 
-src/self_adaptive.o: src/self_adaptive.cpp.o
-.PHONY : src/self_adaptive.o
-
-# target to build an object file
-src/self_adaptive.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/self_adaptive.cpp.o
-.PHONY : src/self_adaptive.cpp.o
-
-src/self_adaptive.i: src/self_adaptive.cpp.i
-.PHONY : src/self_adaptive.i
-
-# target to preprocess a source file
-src/self_adaptive.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/self_adaptive.cpp.i
-.PHONY : src/self_adaptive.cpp.i
-
-src/self_adaptive.s: src/self_adaptive.cpp.s
-.PHONY : src/self_adaptive.s
-
-# target to generate assembly for a file
-src/self_adaptive.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulation.dir/build.make CMakeFiles/simulation.dir/src/self_adaptive.cpp.s
-.PHONY : src/self_adaptive.cpp.s
-
 src/validator.o: src/validator.cpp.o
 .PHONY : src/validator.o
 
@@ -429,21 +381,18 @@ help:
 	@echo "... simulation.o"
 	@echo "... simulation.i"
 	@echo "... simulation.s"
+	@echo "... src/FMS.o"
+	@echo "... src/FMS.i"
+	@echo "... src/FMS.s"
 	@echo "... src/callback.o"
 	@echo "... src/callback.i"
 	@echo "... src/callback.s"
-	@echo "... src/constraint_tuner.o"
-	@echo "... src/constraint_tuner.i"
-	@echo "... src/constraint_tuner.s"
-	@echo "... src/managed_system.o"
-	@echo "... src/managed_system.i"
-	@echo "... src/managed_system.s"
-	@echo "... src/managed_system_helper_function.o"
-	@echo "... src/managed_system_helper_function.i"
-	@echo "... src/managed_system_helper_function.s"
-	@echo "... src/mlp.o"
-	@echo "... src/mlp.i"
-	@echo "... src/mlp.s"
+	@echo "... src/cognitive.o"
+	@echo "... src/cognitive.i"
+	@echo "... src/cognitive.s"
+	@echo "... src/math_.o"
+	@echo "... src/math_.i"
+	@echo "... src/math_.s"
 	@echo "... src/model_learning.o"
 	@echo "... src/model_learning.i"
 	@echo "... src/model_learning.s"
@@ -453,9 +402,6 @@ help:
 	@echo "... src/optimizer.o"
 	@echo "... src/optimizer.i"
 	@echo "... src/optimizer.s"
-	@echo "... src/self_adaptive.o"
-	@echo "... src/self_adaptive.i"
-	@echo "... src/self_adaptive.s"
 	@echo "... src/validator.o"
 	@echo "... src/validator.i"
 	@echo "... src/validator.s"
