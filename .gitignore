@@ -2,9 +2,8 @@
 *.txt
 *.log
 **/bin/**
-build/
-trash/
+**/build/**
 run.sh
-CMakeFiles/
-build/
+**/CMakeFiles/**
+
 
