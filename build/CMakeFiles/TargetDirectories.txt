@@ -1,3 +1,0 @@
-/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build/CMakeFiles/simulation.dir
-/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build/CMakeFiles/edit_cache.dir
-/mnt/d/OneDrive/FH Dortmund/Sem4/Master-Thesis/Implementation/Simulation/build/CMakeFiles/rebuild_cache.dir
