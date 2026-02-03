@@ -375,57 +375,57 @@ void Optimizer::optimize() {
       
     }
   // ################################################################################## drone usage history ################################################################################
-    // paroritize the drone in use
-    std::vector<GRBVar> bitwise_result_bin(NUMBER_DRONE_MAX);
-    GRBLinExpr drone_is_used_sum = 0, drone_in_use_sum = 0, bitwise_result_sum = 0;
+    // // paroritize the drone in use
+    // std::vector<GRBVar> bitwise_result_bin(NUMBER_DRONE_MAX);
+    // GRBLinExpr drone_is_used_sum = 0, drone_in_use_sum = 0, bitwise_result_sum = 0;
 
-    for (int i = 0; i < NUMBER_DRONE_MAX; ++i) {
-      // Create r_bin[i] = n_bin[i] & o_bin[i]
-      bitwise_result_bin[i] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "bitwise_result_bin_" + std::to_string(i));
+    // for (int i = 0; i < NUMBER_DRONE_MAX; ++i) {
+    //   // Create r_bin[i] = n_bin[i] & o_bin[i]
+    //   bitwise_result_bin[i] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "bitwise_result_bin_" + std::to_string(i));
 
-      model.addConstr(bitwise_result_bin[i] <= drone_is_used[i], "r_le_n_" + std::to_string(i));
-      model.addConstr(bitwise_result_bin[i] <= drone_in_use[i], "r_le_o_" + std::to_string(i));
-      model.addConstr(bitwise_result_bin[i] >= drone_is_used[i] + drone_in_use[i] - 1, "r_ge_sum_" + std::to_string(i));
+    //   model.addConstr(bitwise_result_bin[i] <= drone_is_used[i], "r_le_n_" + std::to_string(i));
+    //   model.addConstr(bitwise_result_bin[i] <= drone_in_use[i], "r_le_o_" + std::to_string(i));
+    //   model.addConstr(bitwise_result_bin[i] >= drone_is_used[i] + drone_in_use[i] - 1, "r_ge_sum_" + std::to_string(i));
 
-      drone_is_used_sum += drone_is_used[i];
-      drone_in_use_sum += drone_in_use[i];
-      bitwise_result_sum += bitwise_result_bin[i];
-    }
+    //   drone_is_used_sum += drone_is_used[i];
+    //   drone_in_use_sum += drone_in_use[i];
+    //   bitwise_result_sum += bitwise_result_bin[i];
+    // }
     
-    // Boolean control variables. expr_valid = cond1 OR cond2
-    GRBVar expr_valid = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "expr_valid");
-    GRBVar le1   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "le1");
-    GRBVar eq1   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "eq1");
-    GRBVar cond1 = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "cond1");
+    // // Boolean control variables. expr_valid = cond1 OR cond2
+    // GRBVar expr_valid = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "expr_valid");
+    // GRBVar le1   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "le1");
+    // GRBVar eq1   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "eq1");
+    // GRBVar cond1 = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "cond1");
 
-    GRBVar gt1   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "gt1");
-    GRBVar eq2   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "eq2");
-    GRBVar cond2 = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "cond2");
+    // GRBVar gt1   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "gt1");
+    // GRBVar eq2   = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "eq2");
+    // GRBVar cond2 = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, "cond2");
 
-    // le1: n <= o 
-    model.addGenConstrIndicator(le1, true, drone_is_used_sum - drone_in_use_sum <= 0, "n_le_o");
-    // gt1: n > o 
-    model.addGenConstrIndicator(gt1, true, drone_is_used_sum - drone_in_use_sum >= 1, "n_gt_o");
-    // eq1: n == r 
-    model.addGenConstrIndicator(eq1, true, drone_is_used_sum - bitwise_result_sum == 0, "n_eq_r");
-    // eq2: o == r  
-    model.addGenConstrIndicator(eq2, true, drone_in_use_sum - bitwise_result_sum == 0, "o_eq_r");
+    // // le1: n <= o 
+    // model.addGenConstrIndicator(le1, true, drone_is_used_sum - drone_in_use_sum <= 0, "n_le_o");
+    // // gt1: n > o 
+    // model.addGenConstrIndicator(gt1, true, drone_is_used_sum - drone_in_use_sum >= 1, "n_gt_o");
+    // // eq1: n == r 
+    // model.addGenConstrIndicator(eq1, true, drone_is_used_sum - bitwise_result_sum == 0, "n_eq_r");
+    // // eq2: o == r  
+    // model.addGenConstrIndicator(eq2, true, drone_in_use_sum - bitwise_result_sum == 0, "o_eq_r");
 
-    // cond1 = le1 AND eq1
-    model.addConstr(cond1 <= le1);
-    model.addConstr(cond1 <= eq1);
-    model.addConstr(cond1 >= le1 + eq1 - 1);
+    // // cond1 = le1 AND eq1
+    // model.addConstr(cond1 <= le1);
+    // model.addConstr(cond1 <= eq1);
+    // model.addConstr(cond1 >= le1 + eq1 - 1);
 
-    // cond2 = gt1 AND eq2
-    model.addConstr(cond2 <= gt1);
-    model.addConstr(cond2 <= eq2);
-    model.addConstr(cond2 >= gt1 + eq2 - 1);
+    // // cond2 = gt1 AND eq2
+    // model.addConstr(cond2 <= gt1);
+    // model.addConstr(cond2 <= eq2);
+    // model.addConstr(cond2 >= gt1 + eq2 - 1);
 
-    model.addConstr(expr_valid >= cond1);
-    model.addConstr(expr_valid >= cond2);
-    model.addConstr(expr_valid <= cond1 + cond2);
+    // model.addConstr(expr_valid >= cond1);
+    // model.addConstr(expr_valid >= cond2);
+    // model.addConstr(expr_valid <= cond1 + cond2);
 
-    model.addConstr(expr_valid == 1, "force_condition_true"); 
+    // model.addConstr(expr_valid == 1, "force_condition_true"); 
   // ####################################################################################### Objective #####################################################################################
     // sum of covered_area_total
     GRBLinExpr covered_area_total_sum = 0.0; 
@@ -628,13 +628,13 @@ void Optimizer::optimize() {
     }
   } catch (GRBException &e) {
     std::cout << "Gurobi exception caught in: " << e.getMessage() << " code: " << e.getErrorCode() << std::endl;
-    return;
+    //return;
   } catch (std::exception &e) {
     std::cout << "Standard exception caught in: " << e.what() << std::endl;
-    return;
+    //return;
   } catch (...) {
     std::cout << "Unknown exception caught" << std::endl;
-    return;
+    //return;
   }
 
 

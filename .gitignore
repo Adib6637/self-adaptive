@@ -1,6 +1,3 @@
-*.csv
-*.txt
-*.log
 **/bin/**
 **/build/**
 *.sh

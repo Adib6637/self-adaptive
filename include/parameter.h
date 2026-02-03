@@ -25,15 +25,15 @@
 ///////////////////////////////////////////////////////////////////////////////////// case dependent //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // =============================================
-#define SIMULATION_CASE 2
+#define SIMULATION_CASE 1
 #define SIMULATION_SUB_CASE 1
-#define SIMULATION_DURATION_NS      500000
+#define SIMULATION_DURATION_NS      2200
 #define SIMULATION_CLK_TICK_NS      10
 #define AREA_DEFAULT                80*1000 
 #define OPTIMIZER_GAP               0.00000
 #define AREA_TEST                   100*1000   // only for case 5  
 #define NUMBER_DRONE_MAX_DYNAMIC    10         // only for case 7  {3, 5, 10,15}  
-#define NUMBER_DRONE_MAX_DEFAULT    8          
+#define NUMBER_DRONE_MAX_DEFAULT    5          
 #define OPTIMIZE_INTERVAL           4          // Interval for optimization in number of model parameter updates
 #define DRONE_SET_LENGTH            3          // only for case 6
 
@@ -44,7 +44,7 @@
 #define SAMPEL_PIXEL_SIZE           32.0        // minimum
 #define SAMPEL_SIZE_CM              20.0        //sample : (5cmx5cm)/(32x32) 
 #define SHUTTER_SPEED               2000        // #define MAX_V_CAPTURING round((GSD/3)*SHUTTER_SPEED) , GSD = Ground Sampling Distance = MINIMUM_SAMPEL_SIZE_M/SAMPEL_PIXEL_SIZE
-#define DRONE_IN_USE                {1,1,1,0,0} // priority of the drone in the optimization
+#define DRONE_IN_USE                {1,1,1,0,0,0,0,0} // priority of the drone in the optimization
 
 // logging (define to enable) 
 #define LEARNING_PROGRESS_LOG   
@@ -223,7 +223,7 @@
 
 // optimization objective
 #define OBJECTIVE_ENERGY_WEIGHT 1.0
-#define OBJECTIVE_DRONE_WEIGHT  0.0
+#define OBJECTIVE_DRONE_WEIGHT  80000.0
 #define OBJECTIVE_TIME_WEIGHT   10.0
 #define OBJECTIVE_CHARGING_CYCLE_WEIGHT 0.00
 
